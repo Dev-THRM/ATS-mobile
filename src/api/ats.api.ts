@@ -6,6 +6,9 @@ import {
   Application,
   Interview,
   PipelineStage,
+  CreateJobInput,
+  CreateCandidateInput,
+  ScheduleInterviewInput,
 } from '../types/ats.types';
 
 export const atsApi = {
@@ -16,67 +19,129 @@ export const atsApi = {
   },
 
   // Jobs
-  getJobs: async (params?: { search?: string; status?: string }): Promise<Job[]> => {
-    const { data } = await apiClient.get<Job[]>('/ats/jobs', { params });
-    return data;
+  getJobs: async (params?: { search?: string; status?: string; department?: string; limit?: number }): Promise<Job[]> => {
+    const { data } = await apiClient.get('/ats/jobs', {
+      params: { limit: 50, ...params },
+    });
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.jobs)) return data.jobs;
+    return [];
   },
 
   getJobById: async (jobId: string): Promise<Job> => {
-    const { data } = await apiClient.get<Job>(`/ats/jobs/${jobId}`);
-    return data;
+    const { data } = await apiClient.get(`/ats/jobs/${jobId}`);
+    return data?.job || data;
+  },
+
+  createJob: async (payload: CreateJobInput): Promise<Job> => {
+    const { data } = await apiClient.post('/ats/jobs', payload);
+    return data?.job || data;
+  },
+
+  updateJobStatus: async (jobId: string, status: string): Promise<Job> => {
+    const { data } = await apiClient.patch(`/ats/jobs/${jobId}/status`, { status });
+    return data?.job || data;
+  },
+
+  deleteJob: async (jobId: string): Promise<void> => {
+    await apiClient.delete(`/ats/jobs/${jobId}`);
   },
 
   getJobStages: async (jobId: string): Promise<PipelineStage[]> => {
-    const { data } = await apiClient.get<PipelineStage[]>(`/ats/jobs/${jobId}/stages`);
-    return data;
+    const { data } = await apiClient.get(`/ats/jobs/${jobId}/stages`);
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.stages)) return data.stages;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
   },
 
   // Candidates
-  getCandidates: async (params?: { search?: string; skill?: string; page?: number }): Promise<Candidate[]> => {
-    const { data } = await apiClient.get<Candidate[]>('/ats/candidates', { params });
-    return data;
+  getCandidates: async (params?: { search?: string; skill?: string; page?: number; limit?: number }): Promise<Candidate[]> => {
+    const { data } = await apiClient.get('/ats/candidates', {
+      params: { limit: 50, ...params },
+    });
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.candidates)) return data.candidates;
+    return [];
   },
 
   getCandidateById: async (candidateId: string): Promise<Candidate> => {
-    const { data } = await apiClient.get<Candidate>(`/ats/candidates/${candidateId}`);
-    return data;
+    const { data } = await apiClient.get(`/ats/candidates/${candidateId}`);
+    return data?.candidate || data;
+  },
+
+  createCandidate: async (payload: CreateCandidateInput): Promise<Candidate> => {
+    const { data } = await apiClient.post('/ats/candidates', payload);
+    return data?.candidate || data;
   },
 
   // Applications
-  getApplications: async (params?: { jobId?: string; stageId?: string; status?: string }): Promise<Application[]> => {
-    const { data } = await apiClient.get<Application[]>('/ats/applications', { params });
-    return data;
+  getApplications: async (params?: { jobId?: string; stageId?: string; status?: string; search?: string; limit?: number }): Promise<Application[]> => {
+    const { data } = await apiClient.get('/ats/applications', {
+      params: { limit: 50, ...params },
+    });
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.applications)) return data.applications;
+    return [];
   },
 
   getApplicationById: async (applicationId: string): Promise<Application> => {
-    const { data } = await apiClient.get<Application>(`/ats/applications/${applicationId}`);
-    return data;
+    const { data } = await apiClient.get(`/ats/applications/${applicationId}`);
+    return data?.application || data;
+  },
+
+  createApplication: async (payload: { jobId: string; candidateId: string; stageId?: string; notes?: string }): Promise<Application> => {
+    const { data } = await apiClient.post('/ats/applications', payload);
+    return data?.application || data;
   },
 
   updateApplicationStage: async (
     applicationId: string,
     payload: { stageId: string; notes?: string; rejectionReason?: string },
   ): Promise<Application> => {
-    const { data } = await apiClient.patch<Application>(`/ats/applications/${applicationId}/stage`, payload);
-    return data;
+    const { data } = await apiClient.patch(`/ats/applications/${applicationId}/stage`, payload);
+    return data?.application || data;
   },
 
   // Interviews
-  getInterviews: async (params?: { status?: string; candidateId?: string; jobId?: string }): Promise<Interview[]> => {
-    const { data } = await apiClient.get<Interview[]>('/ats/interviews', { params });
-    return data;
+  getInterviews: async (params?: { status?: string; candidateId?: string; jobId?: string; limit?: number }): Promise<Interview[]> => {
+    const { data } = await apiClient.get('/ats/interviews', {
+      params: { limit: 50, ...params },
+    });
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    if (Array.isArray(data?.interviews)) return data.interviews;
+    return [];
   },
 
   getInterviewById: async (interviewId: string): Promise<Interview> => {
-    const { data } = await apiClient.get<Interview>(`/ats/interviews/${interviewId}`);
-    return data;
+    const { data } = await apiClient.get(`/ats/interviews/${interviewId}`);
+    return data?.interview || data;
+  },
+
+  scheduleInterview: async (payload: ScheduleInterviewInput): Promise<Interview> => {
+    const { data } = await apiClient.post('/ats/interviews', payload);
+    return data?.interview || data;
   },
 
   submitInterviewFeedback: async (
     interviewId: string,
     payload: { feedbackRating: number; feedbackNotes: string },
   ): Promise<Interview> => {
-    const { data } = await apiClient.post<Interview>(`/ats/interviews/${interviewId}/feedback`, payload);
+    const { data } = await apiClient.post(`/ats/interviews/${interviewId}/feedback`, payload);
+    return data?.interview || data;
+  },
+
+  // Resumes
+  uploadResume: async (formData: FormData): Promise<{ resumeUrl?: string; url?: string; key?: string }> => {
+    const { data } = await apiClient.post('/ats/resumes/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return data;
   },
 };

@@ -23,4 +23,29 @@ export const authApi = {
     });
     return data;
   },
+
+  getOrganization: async (): Promise<any> => {
+    const { data } = await apiClient.get('/auth/organization');
+    return data;
+  },
+
+  updateOrganization: async (payload: {
+    name?: string;
+    slug?: string;
+    website?: string;
+    logoUrl?: string;
+    sourcingChannels?: string[];
+  }): Promise<any> => {
+    const { data } = await apiClient.patch('/auth/organization', payload);
+    return data;
+  },
+
+  uploadOrganizationLogo: async (formData: FormData): Promise<{ logoUrl: string }> => {
+    const { data } = await apiClient.post<{ logoUrl: string }>('/auth/organization/logo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data;
+  },
 };

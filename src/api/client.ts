@@ -24,40 +24,69 @@ export const apiClient = axios.create({
   },
 });
 
-// Storage helper utilities for tokens
+// Storage helper utilities for tokens (with Web localStorage fallback)
 export const storeTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      return;
+    }
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
   } catch {
-    // Fallback if secure store fails
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+      localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    }
   }
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem(ACCESS_TOKEN_KEY);
+    }
     return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
   } catch {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(ACCESS_TOKEN_KEY);
+    }
     return null;
   }
 };
 
 export const getRefreshToken = async (): Promise<string | null> => {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem(REFRESH_TOKEN_KEY);
+    }
     return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
   } catch {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(REFRESH_TOKEN_KEY);
+    }
     return null;
   }
 };
 
 export const clearTokens = async (): Promise<void> => {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      return;
+    }
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
   } catch {
-    // Ignore error
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
   }
 };
+
 
 // Request Interceptor: Attach Bearer JWT
 apiClient.interceptors.request.use(

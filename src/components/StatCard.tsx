@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, SHADOWS, RADIUS, FONTS } from '../theme/theme';
 
 interface StatCardProps {
   label: string;
@@ -8,6 +9,8 @@ interface StatCardProps {
   iconName: keyof typeof Ionicons.glyphMap;
   color: string;
   bgColor: string;
+  trend?: string;
+  onPress?: () => void;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -16,11 +19,23 @@ export const StatCard: React.FC<StatCardProps> = ({
   iconName,
   color,
   bgColor,
+  trend,
+  onPress,
 }) => {
+  const Container = onPress ? TouchableOpacity : View;
+
   return (
-    <View style={styles.card}>
-      <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
-        <Ionicons name={iconName} size={20} color={color} />
+    <Container style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.topRow}>
+        <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
+          <Ionicons name={iconName} size={17} color={color} />
+        </View>
+        {trend ? (
+          <View style={styles.trendBadge}>
+            <Ionicons name="trending-up" size={10} color={COLORS.success} />
+            <Text style={styles.trendText}>{trend}</Text>
+          </View>
+        ) : null}
       </View>
       <View style={styles.content}>
         <Text style={styles.value}>{value}</Text>
@@ -28,48 +43,64 @@ export const StatCard: React.FC<StatCardProps> = ({
           {label}
         </Text>
       </View>
-    </View>
+    </Container>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: 16,
     flex: 1,
-    minWidth: '46%',
-    flexDirection: 'row',
-    alignItems: 'center',
+    minWidth: '47%',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderColor: COLORS.border,
     marginBottom: 12,
+    ...SHADOWS.sm,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+  },
+  trendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.successLight,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: RADIUS.full,
+  },
+  trendText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '500',
+    color: COLORS.success,
+    marginLeft: 2,
   },
   content: {
     flex: 1,
   },
   value: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontFamily: FONTS.family,
+    fontSize: 21,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
   label: {
+    fontFamily: FONTS.family,
     fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
-    marginTop: 2,
+    color: COLORS.textSecondary,
+    fontWeight: '400',
+    marginTop: 3,
   },
 });

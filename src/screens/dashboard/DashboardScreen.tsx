@@ -11,169 +11,293 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { atsApi } from '../../api/ats.api';
+import { useAuth } from '../../context/AuthContext';
 import { Header } from '../../components/Header';
 import { StatCard } from '../../components/StatCard';
 import { StageBadge } from '../../components/StageBadge';
 import { ScorePill } from '../../components/ScorePill';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
+import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const { user } = useAuth();
+
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['ats-dashboard'],
     queryFn: atsApi.getDashboardMetrics,
   });
 
   if (isLoading && !isRefetching) {
-    return <LoadingSpinner message="Loading ATS Dashboard..." />;
+    return <LoadingSpinner message="Loading talent dashboard..." />;
   }
 
   const kpis = data?.kpis || {
-    openJobs: 0,
+    activeJobsCount: 0,
+    totalJobsCount: 0,
     totalCandidates: 0,
-    totalApplications: 0,
-    scheduledInterviews: 0,
-    avgAtsScore: 0,
+    activeApplications: 0,
+    hiredCount: 0,
+    rejectedCount: 0,
+    upcomingInterviewsCount: 0,
   };
 
   const handleOpenMeeting = (link?: string) => {
     if (link) {
-      Linking.openURL(link);
+      const url = link.startsWith('http') ? link : `https://${link}`;
+      Linking.openURL(url);
     }
   };
 
+  const recentApps = Array.isArray(data?.recentApplications) ? data.recentApplications : [];
+  const upcomingInterviews = Array.isArray(data?.upcomingInterviews) ? data.upcomingInterviews : [];
+
+  const firstName = user?.firstName || 'Recruiter';
+  const todayStr = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
+
   return (
     <View style={styles.container}>
-      <Header title="ATS Overview" showLogout />
+      <Header
+        title="Talent Overview"
+        subtitle={todayStr}
+        showLogout
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={['#4F46E5']} />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[COLORS.primary]} />
         }
       >
-        {/* KPI Grid */}
-        <Text style={styles.sectionHeader}>Key Metrics</Text>
+        {/* Soft Light Blue & White Welcome Card */}
+        <View style={styles.lightWelcomeCard}>
+          <View style={styles.welcomeTopRow}>
+            <View style={styles.welcomeTextGroup}>
+              <Text style={styles.welcomeGreeting}>Welcome back, {firstName} 👋</Text>
+              <Text style={styles.welcomeSubtitle}>
+                <Text style={styles.highlightNumber}>{kpis.activeApplications} candidates</Text> active across {kpis.activeJobsCount} positions.
+              </Text>
+            </View>
+
+            <View style={styles.liveIndicatorPill}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveIndicatorText}>Live AI</Text>
+            </View>
+          </View>
+
+          {/* Quick Action Buttons */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.outlineActionBtn}
+              onPress={() => navigation.navigate('JobsTab')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="briefcase-outline" size={14} color={COLORS.primary} />
+              <Text style={styles.outlineActionText}>Requisitions ({kpis.activeJobsCount})</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.primaryActionBtn}
+              onPress={() => navigation.navigate('CandidatesTab')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="person-add-outline" size={14} color="#FFFFFF" />
+              <Text style={styles.primaryActionText}>+ Candidate</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Section 1: KPI Grid */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Key Talent Metrics</Text>
+          <Text style={styles.sectionSubtitle}>Live Stats</Text>
+        </View>
+
         <View style={styles.kpiGrid}>
           <StatCard
-            label="Open Positions"
-            value={kpis.openJobs}
+            label="Active Positions"
+            value={kpis.activeJobsCount}
             iconName="briefcase-outline"
-            color="#4F46E5"
-            bgColor="#EEF2FF"
+            color={COLORS.primary}
+            bgColor={COLORS.primaryLight}
+            trend="Open"
+            onPress={() => navigation.navigate('JobsTab')}
           />
           <StatCard
-            label="Candidates"
+            label="Total Talent Pool"
             value={kpis.totalCandidates}
             iconName="people-outline"
-            color="#059669"
-            bgColor="#ECFDF5"
+            color={COLORS.success}
+            bgColor={COLORS.successLight}
+            trend="+New"
+            onPress={() => navigation.navigate('CandidatesTab')}
           />
           <StatCard
-            label="In Pipeline"
-            value={kpis.totalApplications}
-            iconName="git-network-outline"
-            color="#D97706"
-            bgColor="#FEF3C7"
+            label="In Active Review"
+            value={kpis.activeApplications}
+            iconName="git-pull-request-outline"
+            color={COLORS.warning}
+            bgColor={COLORS.warningLight}
+            trend="Pipeline"
+            onPress={() => navigation.navigate('JobsTab')}
           />
           <StatCard
-            label="Interviews"
-            value={kpis.scheduledInterviews}
+            label="Scheduled Rounds"
+            value={kpis.upcomingInterviewsCount}
             iconName="calendar-outline"
-            color="#9333EA"
-            bgColor="#FAF5FF"
+            color={COLORS.accent}
+            bgColor={COLORS.accentLight}
+            trend="Upcoming"
+            onPress={() => navigation.navigate('InterviewsTab')}
           />
         </View>
 
-        {/* Upcoming Interviews Widget */}
-        <View style={styles.sectionTitleRow}>
-          <Text style={styles.sectionHeader}>Upcoming Interviews</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('InterviewsTab')}>
-            <Text style={styles.seeAllText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {data?.upcomingInterviews && data.upcomingInterviews.length > 0 ? (
-          data.upcomingInterviews.slice(0, 3).map((interview) => (
-            <View key={interview.id} style={styles.interviewCard}>
-              <View style={styles.interviewInfo}>
-                <Text style={styles.interviewTitle}>{interview.title}</Text>
-                <Text style={styles.interviewCandidate}>
-                  {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
-                </Text>
-                <Text style={styles.interviewTime}>
-                  {new Date(interview.scheduledAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-
-              {interview.meetingLink ? (
-                <TouchableOpacity
-                  style={styles.joinButton}
-                  onPress={() => handleOpenMeeting(interview.meetingLink)}
-                >
-                  <Ionicons name="videocam" size={16} color="#FFFFFF" />
-                  <Text style={styles.joinButtonText}>Meet</Text>
-                </TouchableOpacity>
-              ) : null}
+        {/* Section 2: Pipeline Progression Funnel */}
+        <View style={styles.funnelCard}>
+          <View style={styles.funnelHeader}>
+            <View style={styles.funnelTitleGroup}>
+              <Ionicons name="filter-outline" size={16} color={COLORS.primary} />
+              <Text style={styles.funnelTitle}>Hiring Funnel</Text>
             </View>
-          ))
-        ) : (
-          <View style={styles.cardEmpty}>
-            <Text style={styles.cardEmptyText}>No interviews scheduled today</Text>
+            <Text style={styles.funnelBadge}>
+              {kpis.hiredCount} Hired • {kpis.rejectedCount} Archived
+            </Text>
           </View>
-        )}
 
-        {/* Recent Applications Feed */}
-        <View style={[styles.sectionTitleRow, { marginTop: 24 }]}>
-          <Text style={styles.sectionHeader}>Recent Applications</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('CandidatesTab')}>
-            <Text style={styles.seeAllText}>View All</Text>
+          <View style={styles.funnelStagesRow}>
+            <View style={styles.funnelStageCol}>
+              <Text style={styles.funnelCount}>{kpis.activeApplications}</Text>
+              <Text style={styles.funnelLabel}>Applied</Text>
+              <View style={[styles.funnelBar, { backgroundColor: '#38BDF8' }]} />
+            </View>
+            <View style={styles.funnelArrow}>
+              <Ionicons name="chevron-forward" size={14} color={COLORS.textLight} />
+            </View>
+            <View style={styles.funnelStageCol}>
+              <Text style={styles.funnelCount}>{kpis.upcomingInterviewsCount}</Text>
+              <Text style={styles.funnelLabel}>Interview</Text>
+              <View style={[styles.funnelBar, { backgroundColor: '#F59E0B' }]} />
+            </View>
+            <View style={styles.funnelArrow}>
+              <Ionicons name="chevron-forward" size={14} color={COLORS.textLight} />
+            </View>
+            <View style={styles.funnelStageCol}>
+              <Text style={styles.funnelCount}>{kpis.hiredCount}</Text>
+              <Text style={styles.funnelLabel}>Offers</Text>
+              <View style={[styles.funnelBar, { backgroundColor: '#10B981' }]} />
+            </View>
+          </View>
+        </View>
+
+        {/* Section 3: Scheduled Interview Rounds */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Scheduled Interviews</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('InterviewsTab')}>
+            <Text style={styles.linkText}>View all →</Text>
           </TouchableOpacity>
         </View>
 
-        {data?.recentApplications && data.recentApplications.length > 0 ? (
-          data.recentApplications.slice(0, 5).map((app) => (
-            <TouchableOpacity
-              key={app.id}
-              style={styles.applicationCard}
-              onPress={() =>
-                navigation.navigate('CandidatesTab', {
-                  screen: 'CandidateDetail',
-                  params: { candidateId: app.candidateId },
-                })
-              }
-            >
-              <View style={styles.appHeader}>
-                <View style={styles.appCandidateInfo}>
-                  <Text style={styles.candidateName}>
-                    {app.candidate?.firstName} {app.candidate?.lastName}
+        <View style={styles.sectionBlock}>
+          {upcomingInterviews.length > 0 ? (
+            upcomingInterviews.slice(0, 3).map((interview) => (
+              <View key={interview.id} style={styles.interviewCard}>
+                <View style={styles.interviewAvatar}>
+                  <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+                </View>
+
+                <View style={styles.interviewInfo}>
+                  <Text style={styles.interviewTitle} numberOfLines={1}>
+                    {interview.title}
                   </Text>
-                  <Text style={styles.jobName} numberOfLines={1}>
-                    {app.job?.title}
+                  <Text style={styles.interviewCandidate}>
+                    {interview.candidateName || 'Candidate'} • {interview.jobTitle || 'Role'}
+                  </Text>
+                  <View style={styles.interviewTimeRow}>
+                    <Ionicons name="time-outline" size={12} color={COLORS.primary} />
+                    <Text style={styles.interviewTime}>
+                      {new Date(interview.scheduledAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                  </View>
+                </View>
+
+                {interview.meetingLink ? (
+                  <TouchableOpacity
+                    style={styles.joinButton}
+                    onPress={() => handleOpenMeeting(interview.meetingLink)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="videocam-outline" size={13} color="#FFFFFF" />
+                    <Text style={styles.joinButtonText}>Meet</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyWidgetCard}>
+              <Ionicons name="calendar-outline" size={24} color={COLORS.textLight} style={{ marginBottom: 6 }} />
+              <Text style={styles.emptyWidgetTitle}>No interviews scheduled today</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Section 4: Live Candidate Stream with AI Fit Scores */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Recent Applications</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('CandidatesTab')}>
+            <Text style={styles.linkText}>Talent Pool →</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionBlock}>
+          {recentApps.length > 0 ? (
+            recentApps.slice(0, 5).map((app) => (
+              <TouchableOpacity
+                key={app.id}
+                style={styles.candidateCard}
+                onPress={() => navigation.navigate('CandidatesTab')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.candidateTop}>
+                  <View style={styles.candidateAvatar}>
+                    <Text style={styles.candidateAvatarText}>
+                      {app.candidateName?.[0] || 'C'}
+                    </Text>
+                  </View>
+                  <View style={styles.candidateMeta}>
+                    <Text style={styles.candidateName}>{app.candidateName || 'Applicant'}</Text>
+                    <Text style={styles.candidateRole} numberOfLines={1}>
+                      {app.jobTitle || 'Role'} {app.department ? `• ${app.department}` : ''}
+                    </Text>
+                  </View>
+                  {app.atsScore !== undefined ? <ScorePill score={app.atsScore} /> : null}
+                </View>
+
+                <View style={styles.candidateBottom}>
+                  <StageBadge stageName={app.currentStage || 'Applied'} />
+                  <Text style={styles.candidateDate}>
+                    {new Date(app.appliedAt).toLocaleDateString()}
                   </Text>
                 </View>
-                <ScorePill score={app.atsScore} />
-              </View>
-
-              <View style={styles.appFooter}>
-                <StageBadge stageName={app.currentStage?.name || 'Applied'} />
-                <Text style={styles.appliedDate}>
-                  Applied {new Date(app.appliedAt).toLocaleDateString()}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <EmptyState
-            title="No applications yet"
-            description="When candidates submit applications, they will appear here in real-time."
-          />
-        )}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <EmptyState
+              iconName="people-outline"
+              title="Awaiting applications"
+              description="Applications submitted from career portals will show up here."
+            />
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -182,133 +306,344 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 36,
   },
-  sectionHeader: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 12,
+  lightWelcomeCard: {
+    backgroundColor: COLORS.surfaceSecondary,
+    borderRadius: RADIUS.lg,
+    padding: 18,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: COLORS.borderSky,
+    ...SHADOWS.sm,
   },
-  sectionTitleRow: {
+  welcomeTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  welcomeTextGroup: {
+    flex: 1,
+    marginRight: 10,
+  },
+  welcomeGreeting: {
+    fontFamily: FONTS.family,
+    fontSize: 16.5,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  welcomeSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 4,
+    lineHeight: 19,
+  },
+  highlightNumber: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  liveIndicatorPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.borderSky,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.success,
+    marginRight: 4,
+  },
+  liveIndicatorText: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  outlineActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.sm,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: COLORS.borderSky,
+  },
+  outlineActionText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.primary,
+    marginLeft: 5,
+  },
+  primaryActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.sm,
+  },
+  primaryActionText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    marginLeft: 5,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 6,
+    marginBottom: 14,
   },
-  seeAllText: {
-    fontSize: 13,
-    color: '#4F46E5',
+  sectionTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 15,
     fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  sectionSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    color: COLORS.textMuted,
+  },
+  linkText: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: COLORS.primary,
+  },
+  sectionBlock: {
+    marginBottom: 20,
   },
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  interviewCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
+  funnelCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: 18,
+    marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
+  },
+  funnelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  funnelTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  funnelTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginLeft: 6,
+  },
+  funnelBadge: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textMuted,
+    backgroundColor: COLORS.surfaceSecondary,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+  },
+  funnelStagesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  funnelStageCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  funnelCount: {
+    fontFamily: FONTS.family,
+    fontSize: 17,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  funnelLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  funnelBar: {
+    height: 4,
+    width: '75%',
+    borderRadius: 2,
+  },
+  funnelArrow: {
+    paddingHorizontal: 4,
+  },
+  interviewCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: 14,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
+  },
+  interviewAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   interviewInfo: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 8,
   },
   interviewTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontFamily: FONTS.family,
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
   interviewCandidate: {
+    fontFamily: FONTS.family,
     fontSize: 12,
-    color: '#64748B',
+    color: COLORS.textSecondary,
     marginTop: 2,
-    fontWeight: '500',
   },
-  interviewTime: {
-    fontSize: 11,
-    color: '#4F46E5',
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  joinButton: {
+  interviewTimeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#059669',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    marginTop: 4,
   },
-  joinButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+  interviewTime: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.primary,
+    fontWeight: '500',
     marginLeft: 4,
   },
-  cardEmpty: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+  joinButton: {
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: RADIUS.sm,
+  },
+  joinButtonText: {
+    fontFamily: FONTS.family,
+    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  emptyWidgetCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: 18,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderStyle: 'dashed',
+    borderColor: COLORS.border,
   },
-  cardEmptyText: {
-    fontSize: 13,
-    color: '#94A3B8',
+  emptyWidgetTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    color: COLORS.textMuted,
   },
-  applicationCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+  candidateCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
   },
-  appHeader: {
+  candidateTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 10,
   },
-  appCandidateInfo: {
+  candidateAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  candidateAvatarText: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  candidateMeta: {
     flex: 1,
     marginRight: 8,
   },
   candidateName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontFamily: FONTS.family,
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
-  jobName: {
-    fontSize: 13,
-    color: '#64748B',
+  candidateRole: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
-  appFooter: {
+  candidateBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 10,
+    borderTopColor: COLORS.borderLight,
+    paddingTop: 8,
   },
-  appliedDate: {
+  candidateDate: {
+    fontFamily: FONTS.family,
     fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '500',
+    color: COLORS.textMuted,
   },
 });

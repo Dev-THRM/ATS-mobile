@@ -6,9 +6,13 @@ export type InterviewType = 'SCREENING' | 'TECHNICAL' | 'BEHAVIORAL' | 'SYSTEM_D
 
 export interface PipelineStage {
   id: string;
-  jobId: string;
+  jobId?: string;
   name: string;
   order: number;
+  stageType?: string;
+  isInitial?: boolean;
+  isHired?: boolean;
+  isRejected?: boolean;
   _count?: {
     applications: number;
   };
@@ -32,7 +36,8 @@ export interface Job {
   pipelineStages?: PipelineStage[];
   _count?: {
     applications: number;
-    interviews: number;
+    pipelineStages?: number;
+    interviews?: number;
   };
   createdAt: string;
   updatedAt: string;
@@ -54,8 +59,11 @@ export interface Candidate {
   linkedinUrl?: string;
   githubUrl?: string;
   source?: string;
-  tags: string[];
+  tags?: string[];
   applications?: Application[];
+  _count?: {
+    applications: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +84,7 @@ export interface Application {
   rejectionReason?: string;
   appliedAt: string;
   createdAt: string;
+  interviews?: Interview[];
 }
 
 export interface Interview {
@@ -95,8 +104,8 @@ export interface Interview {
   locationNotes?: string;
   feedbackRating?: number;
   feedbackNotes?: string;
-  candidate: Candidate;
-  job: Job;
+  candidate?: Candidate;
+  job?: Job;
   interviewer?: {
     id: string;
     firstName: string;
@@ -108,14 +117,79 @@ export interface Interview {
 
 export interface AtsDashboardMetrics {
   kpis: {
-    openJobs: number;
+    activeJobsCount: number;
+    totalJobsCount: number;
     totalCandidates: number;
-    totalApplications: number;
-    scheduledInterviews: number;
-    avgAtsScore: number;
+    activeApplications: number;
+    hiredCount: number;
+    rejectedCount: number;
+    upcomingInterviewsCount: number;
   };
-  funnel: Array<{ stageName: string; count: number }>;
-  sourcing: Array<{ channel: string; count: number }>;
-  recentApplications: Application[];
-  upcomingInterviews: Interview[];
+  pipelineFunnel?: Array<{ stage: string; count: number }>;
+  sourcesBreakdown?: Array<{ source: string; count: number; percentage: number }>;
+  recentApplications: Array<{
+    id: string;
+    candidateName: string;
+    candidateEmail: string;
+    jobTitle: string;
+    department?: string;
+    currentStage: string;
+    status: string;
+    atsScore?: number;
+    appliedAt: string;
+  }>;
+  upcomingInterviews: Array<{
+    id: string;
+    title: string;
+    candidateName: string;
+    jobTitle: string;
+    scheduledAt: string;
+    durationMinutes: number;
+    meetingLink?: string;
+    interviewer?: string;
+  }>;
+}
+
+export interface CreateJobInput {
+  title: string;
+  description: string;
+  department?: string;
+  location?: string;
+  employmentType: EmploymentType;
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryCurrency?: string;
+  experienceMin?: number;
+  experienceMax?: number;
+  experienceLevel?: string;
+  skillsRequired?: string[];
+}
+
+export interface CreateCandidateInput {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  currentCompany?: string;
+  currentTitle?: string;
+  location?: string;
+  skills?: string[];
+  linkedinUrl?: string;
+  githubUrl?: string;
+  portfolioUrl?: string;
+  resumeUrl?: string;
+  source?: string;
+}
+
+export interface ScheduleInterviewInput {
+  applicationId: string;
+  candidateId?: string;
+  jobId?: string;
+  title: string;
+  type: InterviewType;
+  scheduledAt: string;
+  durationMinutes?: number;
+  timezone?: string;
+  meetingLink?: string;
+  locationNotes?: string;
 }

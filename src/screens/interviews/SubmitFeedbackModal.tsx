@@ -9,15 +9,17 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { atsApi } from '../../api/ats.api';
 import { Interview } from '../../types/ats.types';
+import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 interface SubmitFeedbackModalProps {
   visible: boolean;
   interview: Interview;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
@@ -26,6 +28,7 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const queryClient = useQueryClient();
   const [rating, setRating] = useState<number>(interview.feedbackRating || 5);
   const [notes, setNotes] = useState<string>(interview.feedbackNotes || '');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -49,8 +52,11 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
         feedbackRating: rating,
         feedbackNotes: notes.trim(),
       });
-      Alert.alert('Scorecard Saved', 'Interview evaluation submitted successfully.');
-      onSuccess();
+      queryClient.invalidateQueries({ queryKey: ['ats-interviews'] });
+      queryClient.invalidateQueries({ queryKey: ['ats-dashboard'] });
+      Alert.alert('Saved', 'Scorecard evaluation submitted.');
+      if (onSuccess) onSuccess();
+      onClose();
     } catch (err: any) {
       Alert.alert('Error', err.response?.data?.message || 'Failed to submit scorecard.');
     } finally {
@@ -61,38 +67,40 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
   const getRatingLabel = (stars: number) => {
     switch (stars) {
       case 5:
-        return 'Strong Hire (Exceptional)';
+        return { text: 'Strong Hire (Exceptional)', color: '#059669', bg: '#ECFDF5' };
       case 4:
-        return 'Hire (Meets Requirements)';
+        return { text: 'Hire (Meets Requirements)', color: '#0284C7', bg: '#F0F9FF' };
       case 3:
-        return 'Neutral (Mixed Signals)';
+        return { text: 'Neutral (Mixed Signals)', color: '#D97706', bg: '#FFFBEB' };
       case 2:
-        return 'No Hire (Gaps Identified)';
+        return { text: 'No Hire (Skill Gaps)', color: '#EA580C', bg: '#FFF7ED' };
       case 1:
-        return 'Strong No Hire (Major Deficits)';
+        return { text: 'Strong No Hire (Major Deficits)', color: '#DC2626', bg: '#FEF2F2' };
       default:
-        return '';
+        return { text: '', color: COLORS.textSecondary, bg: COLORS.surfaceSecondary };
     }
   };
+
+  const currentVerdict = getRatingLabel(rating);
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.title}>Interview Scorecard</Text>
+            <View>
+              <Text style={styles.title}>Interview Scorecard</Text>
+              <Text style={styles.candidateName}>
+                {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
+              </Text>
+            </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color="#64748B" />
+              <Ionicons name="close" size={20} color={COLORS.textSecondary} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.candidateName}>
-            Candidate: {interview.candidate?.firstName} {interview.candidate?.lastName}
-          </Text>
-          <Text style={styles.jobTitle}>Role: {interview.job?.title}</Text>
-
           {/* Star Rating Picker */}
-          <Text style={styles.label}>Evaluation Rating</Text>
+          <Text style={styles.label}>Evaluation Verdict</Text>
           <View style={styles.starPickerRow}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity
@@ -102,20 +110,25 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
               >
                 <Ionicons
                   name={star <= rating ? 'star' : 'star-outline'}
-                  size={36}
+                  size={32}
                   color={star <= rating ? '#F59E0B' : '#CBD5E1'}
                 />
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={styles.ratingLabel}>{getRatingLabel(rating)}</Text>
+
+          <View style={[styles.verdictBadge, { backgroundColor: currentVerdict.bg }]}>
+            <Text style={[styles.ratingLabel, { color: currentVerdict.color }]}>
+              {currentVerdict.text}
+            </Text>
+          </View>
 
           {/* Feedback Notes */}
-          <Text style={styles.label}>Technical / Behavioral Notes</Text>
+          <Text style={styles.label}>Technical & Behavioral Notes</Text>
           <TextInput
             style={styles.notesInput}
-            placeholder="Document candidate strengths, coding assessment, architecture review, and potential areas for growth..."
-            placeholderTextColor="#94A3B8"
+            placeholder="Document code review, architecture insights, problem-solving depth, and areas for growth..."
+            placeholderTextColor={COLORS.textLight}
             multiline
             numberOfLines={4}
             value={notes}
@@ -136,7 +149,7 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
               {isSubmitting ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={styles.submitBtnText}>Save Evaluation</Text>
+                <Text style={styles.submitBtnText}>Save Scorecard</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -149,72 +162,77 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'flex-end',
   },
   content: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+    padding: 20,
     maxHeight: '90%',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: 14,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  closeBtn: {
-    padding: 4,
+    fontFamily: FONTS.family,
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
   candidateName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#334155',
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  jobTitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 16,
+  closeBtn: {
+    padding: 2,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 8,
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+    marginBottom: 6,
   },
   starPickerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   starTouchable: {
-    padding: 6,
+    padding: 4,
+  },
+  verdictBadge: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: RADIUS.sm,
+    alignItems: 'center',
+    marginBottom: 14,
   },
   ratingLabel: {
-    textAlign: 'center',
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#D97706',
-    marginBottom: 16,
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
   },
   notesInput: {
-    backgroundColor: '#F8FAFC',
+    fontFamily: FONTS.family,
+    backgroundColor: COLORS.surfaceSecondary,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    color: '#0F172A',
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    padding: 10,
+    fontSize: 13,
+    color: COLORS.textPrimary,
     textAlignVertical: 'top',
     height: 90,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -222,27 +240,29 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    padding: 12,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surfaceSecondary,
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 8,
   },
   cancelBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#475569',
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
   },
   submitBtn: {
     flex: 2,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#4F46E5',
+    padding: 12,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
   },
   submitBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
 });

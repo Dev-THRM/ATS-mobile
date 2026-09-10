@@ -9,26 +9,26 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
+import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const LoginScreen: React.FC = () => {
   const { login, isLoading } = useAuth();
-  const [orgSlug, setOrgSlug] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [orgSlug, setOrgSlug] = useState('acme-corp');
+  const [email, setEmail] = useState('admin@acme.com');
+  const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!orgSlug.trim()) {
-      setError('Please enter your Organization Slug');
+      setError('Please enter your Organization Slug (e.g. acme-corp)');
       return;
     }
     if (!email.trim() || !password) {
-      setError('Please enter both Email and Password');
+      setError('Please provide your work email and password');
       return;
     }
 
@@ -43,7 +43,7 @@ export const LoginScreen: React.FC = () => {
       const msg =
         err.response?.data?.message ||
         err.message ||
-        'Failed to log in. Please check your credentials.';
+        'Authentication failed. Please verify credentials.';
       setError(Array.isArray(msg) ? msg.join(', ') : msg);
     }
   };
@@ -52,6 +52,7 @@ export const LoginScreen: React.FC = () => {
     setOrgSlug('acme-corp');
     setEmail('admin@acme.com');
     setPassword('password123');
+    setError(null);
   };
 
   return (
@@ -62,110 +63,115 @@ export const LoginScreen: React.FC = () => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {/* Brand Banner */}
-        <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Ionicons name="briefcase" size={32} color="#4F46E5" />
-          </View>
-          <Text style={styles.brandTitle}>ATS Recruiter</Text>
-          <Text style={styles.brandSubtitle}>
-            AI-Powered Hiring & Candidate Pipeline
-          </Text>
-        </View>
-
-        {/* Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Sign in to your organization</Text>
-
-          {error ? (
-            <View style={styles.errorBanner}>
-              <Ionicons name="alert-circle" size={18} color="#DC2626" />
-              <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.cardContainer}>
+          {/* Brand Header */}
+          <View style={styles.brandContainer}>
+            <View style={styles.logoBadge}>
+              <Ionicons name="sparkles" size={24} color="#FFFFFF" />
             </View>
-          ) : null}
-
-          {/* Org Slug */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Organization Slug</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="business-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. acme-corp"
-                placeholderTextColor="#94A3B8"
-                autoCapitalize="none"
-                autoCorrect={false}
-                value={orgSlug}
-                onChangeText={setOrgSlug}
-              />
-            </View>
+            <Text style={styles.brandTitle}>ATS Recruiter</Text>
+            <Text style={styles.brandSubtitle}>
+              Hiring Pipeline & AI Candidate Screening
+            </Text>
           </View>
 
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Work Email</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="recruiter@company.com"
-                placeholderTextColor="#94A3B8"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
-                value={email}
-                onChangeText={setEmail}
-              />
-            </View>
-          </View>
+          {/* Form Card (Light Blue & White Theme) */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Sign in to your organization</Text>
 
-          {/* Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={18}
-                  color="#64748B"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[styles.loginButton, isLoading && styles.disabledButton]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <View style={styles.buttonInner}>
-                <Text style={styles.loginButtonText}>Sign In</Text>
-                <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            {error ? (
+              <View style={styles.errorBanner}>
+                <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                <Text style={styles.errorText}>{error}</Text>
               </View>
-            )}
-          </TouchableOpacity>
+            ) : null}
 
-          {/* Demo Auto-fill Helper */}
-          <TouchableOpacity onPress={handleFillDemo} style={styles.demoButton}>
-            <Text style={styles.demoButtonText}>Auto-fill Sample Demo</Text>
-          </TouchableOpacity>
+            {/* Org Slug */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Organization Slug</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. acme-corp"
+                  placeholderTextColor={COLORS.textLight}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={orgSlug}
+                  onChangeText={setOrgSlug}
+                />
+              </View>
+            </View>
+
+            {/* Email */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Work Email</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="recruiter@company.com"
+                  placeholderTextColor={COLORS.textLight}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  autoCorrect={false}
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.textLight}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={16}
+                    color={COLORS.textMuted}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Login Button */}
+            <TouchableOpacity
+              style={[styles.loginButton, isLoading && styles.disabledButton]}
+              onPress={handleLogin}
+              disabled={isLoading}
+              activeOpacity={0.8}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <View style={styles.buttonInner}>
+                  <Text style={styles.loginButtonText}>Sign In</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 5 }} />
+                </View>
+              )}
+            </TouchableOpacity>
+
+            {/* Demo Quick Button */}
+            <TouchableOpacity onPress={handleFillDemo} style={styles.demoButton} activeOpacity={0.7}>
+              <Ionicons name="flash-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
+              <Text style={styles.demoButtonText}>Auto-Fill Demo Credentials (Acme Corp)</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -175,111 +181,119 @@ export const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.surfaceSecondary, // Soft ice blue #F0F7FF
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: 20,
+    alignItems: 'center',
+  },
+  cardContainer: {
+    width: '100%',
+    maxWidth: 420,
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
   },
   logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: '#EEF2FF',
+    width: 52,
+    height: 52,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+    ...SHADOWS.sm,
   },
   brandTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.5,
+    fontFamily: FONTS.family,
+    fontSize: 22,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    letterSpacing: -0.3,
   },
   brandSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-    fontWeight: '500',
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    color: COLORS.textSecondary,
+    marginTop: 3,
+    fontWeight: '400',
     textAlign: 'center',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    borderColor: COLORS.borderSky,
+    ...SHADOWS.md,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 18,
+    fontFamily: FONTS.family,
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 16,
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: COLORS.errorLight,
     borderWidth: 1,
     borderColor: '#FECACA',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: RADIUS.sm,
+    padding: 10,
+    marginBottom: 14,
   },
   errorText: {
-    color: '#DC2626',
-    fontSize: 13,
+    fontFamily: FONTS.family,
+    color: COLORS.error,
+    fontSize: 12,
     fontWeight: '500',
-    marginLeft: 8,
+    marginLeft: 6,
     flex: 1,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 6,
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+    marginBottom: 5,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.surfaceSecondary,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 10,
   },
   inputIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   input: {
+    fontFamily: FONTS.family,
     flex: 1,
-    height: 48,
-    fontSize: 15,
-    color: '#0F172A',
+    height: 42,
+    fontSize: 13.5,
+    color: COLORS.textPrimary,
   },
   eyeButton: {
-    padding: 8,
+    padding: 6,
   },
   loginButton: {
-    backgroundColor: '#4F46E5',
-    height: 50,
-    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    height: 44,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   disabledButton: {
     opacity: 0.6,
@@ -289,18 +303,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginButtonText: {
+    fontFamily: FONTS.family,
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
   },
   demoButton: {
-    marginTop: 16,
+    marginTop: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    justifyContent: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: RADIUS.sm,
   },
   demoButtonText: {
-    fontSize: 13,
-    color: '#6366F1',
-    fontWeight: '600',
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: COLORS.primary,
+    fontWeight: '500',
   },
 });

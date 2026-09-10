@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS, RADIUS, FONTS } from '../theme/theme';
 
 interface ScorePillProps {
   score?: number | null;
@@ -11,8 +12,9 @@ export const ScorePill: React.FC<ScorePillProps> = ({ score, size = 'small' }) =
   if (score === undefined || score === null) {
     return (
       <View style={[styles.pill, styles.neutralBg, size === 'medium' && styles.mediumPill]}>
+        <Ionicons name="sparkles-outline" size={size === 'medium' ? 11 : 9} color={COLORS.textLight} style={styles.icon} />
         <Text style={[styles.text, styles.neutralText, size === 'medium' && styles.mediumText]}>
-          No ATS Score
+          Evaluating
         </Text>
       </View>
     );
@@ -20,12 +22,15 @@ export const ScorePill: React.FC<ScorePillProps> = ({ score, size = 'small' }) =
 
   const getScoreTheme = (val: number) => {
     if (val >= 80) {
-      return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0' };
+      return { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0', icon: 'sparkles' as const };
     }
-    if (val >= 50) {
-      return { bg: '#FEF3C7', text: '#D97706', border: '#FDE68A' };
+    if (val >= 60) {
+      return { bg: '#F0F9FF', text: '#0284C7', border: '#BAE6FD', icon: 'sparkles' as const };
     }
-    return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA' };
+    if (val >= 40) {
+      return { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A', icon: 'help-circle-outline' as const };
+    }
+    return { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA', icon: 'alert-circle-outline' as const };
   };
 
   const theme = getScoreTheme(score);
@@ -38,7 +43,12 @@ export const ScorePill: React.FC<ScorePillProps> = ({ score, size = 'small' }) =
         size === 'medium' && styles.mediumPill,
       ]}
     >
-      <Ionicons name="sparkles" size={size === 'medium' ? 14 : 11} color={theme.text} style={styles.icon} />
+      <Ionicons
+        name={theme.icon}
+        size={size === 'medium' ? 12 : 10}
+        color={theme.text}
+        style={styles.icon}
+      />
       <Text style={[styles.text, { color: theme.text }, size === 'medium' && styles.mediumText]}>
         {Math.round(score)}% Match
       </Text>
@@ -52,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 999,
+    borderRadius: RADIUS.full,
     borderWidth: 1,
     alignSelf: 'flex-start',
   },
@@ -64,17 +74,18 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   text: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '500',
   },
   mediumText: {
-    fontSize: 13,
+    fontSize: 11.5,
   },
   neutralBg: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: COLORS.surfaceSecondary,
+    borderColor: COLORS.border,
   },
   neutralText: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
   },
 });

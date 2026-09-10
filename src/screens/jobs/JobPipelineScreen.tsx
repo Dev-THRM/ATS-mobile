@@ -10,6 +10,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Linking,
+  RefreshControl,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +20,7 @@ import { ScorePill } from '../../components/ScorePill';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { Application, PipelineStage } from '../../types/ats.types';
+import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   route,
@@ -31,241 +34,343 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [targetStageId, setTargetStageId] = useState<string>('');
   const [transitionNotes, setTransitionNotes] = useState<string>('');
+  const [rejectionReason, setRejectionReason] = useState<string>('');
 
-  // Fetch Stages
-  const { data: stages, isLoading: stagesLoading } = useQuery({
+  const { data: stagesData, isLoading: loadingStages } = useQuery({
     queryKey: ['job-stages', jobId],
     queryFn: () => atsApi.getJobStages(jobId),
   });
 
-  // Fetch Applications for this job
-  const { data: applications, isLoading: appsLoading, refetch } = useQuery({
+  const {
+    data: applicationsData,
+    isLoading: loadingApps,
+    refetch,
+    isRefetching,
+  } = useQuery({
     queryKey: ['job-applications', jobId],
     queryFn: () => atsApi.getApplications({ jobId }),
   });
 
-  // Mutation for Stage Transition
-  const stageMutation = useMutation({
-    mutationFn: ({ appId, stageId, notes }: { appId: string; stageId: string; notes?: string }) =>
-      atsApi.updateApplicationStage(appId, { stageId, notes }),
+  const stages: PipelineStage[] = Array.isArray(stagesData)
+    ? stagesData
+    : (stagesData as any)?.stages || (stagesData as any)?.data || [];
+
+  const applications: Application[] = Array.isArray(applicationsData)
+    ? applicationsData
+    : (applicationsData as any)?.applications || (applicationsData as any)?.data || [];
+
+  const filteredApps = applications.filter((app) => {
+    if (!selectedStageId) return true;
+    return app.currentStageId === selectedStageId;
+  });
+
+  const updateStageMutation = useMutation({
+    mutationFn: ({
+      appId,
+      payload,
+    }: {
+      appId: string;
+      payload: { stageId: string; notes?: string; rejectionReason?: string };
+    }) => atsApi.updateApplicationStage(appId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-applications', jobId] });
       queryClient.invalidateQueries({ queryKey: ['ats-dashboard'] });
       setTransitionModalVisible(false);
+      setSelectedApplication(null);
       setTransitionNotes('');
-      Alert.alert('Stage Updated', 'Candidate successfully transitioned to new stage.');
+      setRejectionReason('');
+      Alert.alert('Success', 'Candidate stage updated.');
     },
     onError: (err: any) => {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to update candidate stage');
+      const msg = err.response?.data?.message || err.message || 'Failed to move stage.';
+      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
     },
   });
 
-  const activeStages = stages || [];
-  const currentStage = activeStages.find((s) => s.id === selectedStageId) || activeStages[0];
-  const activeStageId = selectedStageId || activeStages[0]?.id;
-
-  const stageApplications = (applications || []).filter(
-    (app) => app.currentStageId === activeStageId,
-  );
-
-  const handleOpenTransition = (app: Application) => {
+  const handleOpenTransitionModal = (app: Application) => {
     setSelectedApplication(app);
-    setTargetStageId(activeStages[0]?.id || '');
+    setTargetStageId(app.currentStageId || (stages[0]?.id ?? ''));
+    setTransitionNotes('');
+    setRejectionReason('');
     setTransitionModalVisible(true);
   };
 
   const handleConfirmTransition = () => {
     if (!selectedApplication || !targetStageId) return;
-    stageMutation.mutate({
+
+    const chosenStage = stages.find((s) => s.id === targetStageId);
+    const isRejectStage =
+      chosenStage?.isRejected ||
+      chosenStage?.name?.toLowerCase().includes('reject') ||
+      chosenStage?.stageType?.toLowerCase().includes('reject');
+
+    if (isRejectStage && !rejectionReason.trim()) {
+      Alert.alert('Reason Required', 'Please document why candidate was rejected.');
+      return;
+    }
+
+    updateStageMutation.mutate({
       appId: selectedApplication.id,
-      stageId: targetStageId,
-      notes: transitionNotes,
+      payload: {
+        stageId: targetStageId,
+        notes: transitionNotes.trim() || undefined,
+        rejectionReason: isRejectStage ? rejectionReason.trim() : undefined,
+      },
     });
   };
 
-  if (stagesLoading || appsLoading) {
-    return <LoadingSpinner message="Loading recruitment pipeline..." />;
-  }
+  const handleCallCandidate = (phone?: string) => {
+    if (phone) Linking.openURL(`tel:${phone}`);
+  };
+
+  const handleEmailCandidate = (email?: string) => {
+    if (email) Linking.openURL(`mailto:${email}`);
+  };
+
+  const renderCandidateCard = ({ item }: { item: Application }) => {
+    const candidateName = `${item.candidate?.firstName || ''} ${item.candidate?.lastName || ''}`.trim() || 'Candidate';
+    const currentStageName = item.currentStage?.name || 'Sourced';
+
+    return (
+      <View style={styles.appCard}>
+        <View style={styles.appCardTop}>
+          <TouchableOpacity
+            style={styles.candidateInfoRow}
+            onPress={() =>
+              navigation.navigate('CandidateDetail', { candidateId: item.candidateId })
+            }
+          >
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {item.candidate?.firstName?.[0] || 'C'}
+                {item.candidate?.lastName?.[0] || ''}
+              </Text>
+            </View>
+            <View style={styles.metaCol}>
+              <Text style={styles.nameText}>{candidateName}</Text>
+              <Text style={styles.subText} numberOfLines={1}>
+                {item.candidate?.currentTitle || 'Applicant'}{' '}
+                {item.candidate?.currentCompany ? `@ ${item.candidate.currentCompany}` : ''}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {item.atsScore !== undefined ? <ScorePill score={item.atsScore} /> : null}
+        </View>
+
+        {/* Current Stage Indicator */}
+        <View style={styles.stageIndicatorRow}>
+          <View style={styles.stageChip}>
+            <Ionicons name="git-commit-outline" size={12} color={COLORS.primary} />
+            <Text style={styles.stageChipText}>{currentStageName}</Text>
+          </View>
+
+          <Text style={styles.appliedDateText}>
+            {new Date(item.appliedAt).toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+            })}
+          </Text>
+        </View>
+
+        {/* Quick Contact & Action Buttons */}
+        <View style={styles.appCardFooter}>
+          <View style={styles.contactIconsGroup}>
+            {item.candidate?.phone ? (
+              <TouchableOpacity
+                style={styles.circleActionBtn}
+                onPress={() => handleCallCandidate(item.candidate?.phone)}
+              >
+                <Ionicons name="call-outline" size={14} color={COLORS.primary} />
+              </TouchableOpacity>
+            ) : null}
+
+            {item.candidate?.email ? (
+              <TouchableOpacity
+                style={[styles.circleActionBtn, { marginLeft: 6 }]}
+                onPress={() => handleEmailCandidate(item.candidate?.email)}
+              >
+                <Ionicons name="mail-outline" size={14} color={COLORS.primary} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <TouchableOpacity
+            style={styles.advanceButton}
+            onPress={() => handleOpenTransitionModal(item)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.advanceButtonText}>Move Stage</Text>
+            <Ionicons name="arrow-forward" size={12} color="#FFFFFF" style={{ marginLeft: 3 }} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const selectedTargetStage = stages.find((s) => s.id === targetStageId);
+  const isTargetReject =
+    selectedTargetStage?.isRejected ||
+    selectedTargetStage?.name?.toLowerCase().includes('reject') ||
+    selectedTargetStage?.stageType?.toLowerCase().includes('reject');
 
   return (
     <View style={styles.container}>
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color="#0F172A" />
+      {/* Top Header */}
+      <View style={styles.navHeader}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <View style={styles.titleArea}>
-          <Text style={styles.jobTitle} numberOfLines={1}>
-            {jobTitle}
+        <View style={styles.navTitleGroup}>
+          <Text style={styles.navTitle} numberOfLines={1}>
+            {jobTitle || 'Job Pipeline'}
           </Text>
-          <Text style={styles.subtext}>Pipeline Stages ({applications?.length || 0} Total)</Text>
+          <Text style={styles.navSub}>Kanban Stages • {applications.length} Candidates</Text>
         </View>
       </View>
 
-      {/* Horizontal Stage Selector Tabs */}
-      <View style={styles.stageTabsWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stageTabsContent}>
-          {activeStages.map((st) => {
-            const count = (applications || []).filter((a) => a.currentStageId === st.id).length;
-            const isSelected = st.id === activeStageId;
+      {/* Stage Tab Filters */}
+      <View style={styles.stageTabsContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stageTabsScroll}>
+          <TouchableOpacity
+            style={[styles.stageTab, selectedStageId === null && styles.stageTabActive]}
+            onPress={() => setSelectedStageId(null)}
+          >
+            <Text style={[styles.stageTabText, selectedStageId === null && styles.stageTabTextActive]}>
+              All ({applications.length})
+            </Text>
+          </TouchableOpacity>
 
+          {stages.map((stage) => {
+            const count = applications.filter((a) => a.currentStageId === stage.id).length;
+            const isSel = selectedStageId === stage.id;
             return (
               <TouchableOpacity
-                key={st.id}
-                style={[styles.stageTab, isSelected && styles.activeStageTab]}
-                onPress={() => setSelectedStageId(st.id)}
+                key={stage.id}
+                style={[styles.stageTab, isSel && styles.stageTabActive]}
+                onPress={() => setSelectedStageId(stage.id)}
               >
-                <Text style={[styles.stageTabText, isSelected && styles.activeStageTabText]}>
-                  {st.name}
+                <Text style={[styles.stageTabText, isSel && styles.stageTabTextActive]}>
+                  {stage.name} ({count})
                 </Text>
-                <View style={[styles.badgeCount, isSelected && styles.activeBadgeCount]}>
-                  <Text style={[styles.badgeCountText, isSelected && styles.activeBadgeCountText]}>
-                    {count}
-                  </Text>
-                </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* Candidates List in this stage */}
-      <FlatList
-        data={stageApplications}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <View style={styles.candidateCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.infoArea}>
-                <Text style={styles.candidateName}>
-                  {item.candidate?.firstName} {item.candidate?.lastName}
-                </Text>
-                <Text style={styles.candidateEmail}>{item.candidate?.email}</Text>
-                {item.candidate?.currentCompany ? (
-                  <Text style={styles.candidateCompany}>
-                    {item.candidate?.currentTitle || 'Engineer'} at {item.candidate.currentCompany}
-                  </Text>
-                ) : null}
-              </View>
-              <ScorePill score={item.atsScore} />
-            </View>
+      {/* Candidate Cards in Pipeline */}
+      {loadingApps && !isRefetching ? (
+        <LoadingSpinner message="Loading candidates..." />
+      ) : (
+        <FlatList
+          data={filteredApps}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCandidateCard}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[COLORS.primary]} />
+          }
+          ListEmptyComponent={
+            <EmptyState
+              iconName="git-network-outline"
+              title="No candidates in this stage"
+              description="Candidates will show up when assigned or moved to this stage."
+            />
+          }
+        />
+      )}
 
-            {/* Candidate Skills Pills */}
-            {item.candidate?.skills && item.candidate.skills.length > 0 ? (
-              <View style={styles.skillsRow}>
-                {item.candidate.skills.slice(0, 4).map((skill, idx) => (
-                  <View key={idx} style={styles.skillChip}>
-                    <Text style={styles.skillText}>{skill}</Text>
-                  </View>
-                ))}
-                {item.candidate.skills.length > 4 ? (
-                  <Text style={styles.moreSkillsText}>+{item.candidate.skills.length - 4}</Text>
-                ) : null}
-              </View>
-            ) : null}
-
-            {/* Action Bar */}
-            <View style={styles.actionBar}>
-              <TouchableOpacity
-                style={styles.detailButton}
-                onPress={() =>
-                  navigation.navigate('CandidatesTab', {
-                    screen: 'CandidateDetail',
-                    params: { candidateId: item.candidateId },
-                  })
-                }
-              >
-                <Ionicons name="person-outline" size={14} color="#4F46E5" />
-                <Text style={styles.detailButtonText}>Profile</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.moveButton}
-                onPress={() => handleOpenTransition(item)}
-              >
-                <Ionicons name="arrow-forward-circle-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.moveButtonText}>Move Stage</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <EmptyState
-            iconName="people-outline"
-            title={`No candidates in ${currentStage?.name || 'this stage'}`}
-            description="Advance candidates from earlier stages or check other pipeline columns."
-          />
-        }
-      />
-
-      {/* Stage Transition Modal */}
-      <Modal visible={transitionModalVisible} transparent animationType="slide">
+      {/* Stage Movement Modal */}
+      <Modal
+        visible={transitionModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTransitionModalVisible(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Move Candidate Stage</Text>
-            <Text style={styles.modalSubtitle}>
-              Select new stage for {selectedApplication?.candidate?.firstName}{' '}
-              {selectedApplication?.candidate?.lastName}
-            </Text>
-
-            {/* Stage Options */}
-            <Text style={styles.inputLabel}>Target Stage</Text>
-            <View style={styles.modalStageList}>
-              {activeStages.map((st) => (
-                <TouchableOpacity
-                  key={st.id}
-                  style={[
-                    styles.modalStageOption,
-                    targetStageId === st.id && styles.activeModalStageOption,
-                  ]}
-                  onPress={() => setTargetStageId(st.id)}
-                >
-                  <Text
-                    style={[
-                      styles.modalStageOptionText,
-                      targetStageId === st.id && styles.activeModalStageOptionText,
-                    ]}
-                  >
-                    {st.name}
-                  </Text>
-                  {targetStageId === st.id ? (
-                    <Ionicons name="checkmark-circle" size={18} color="#4F46E5" />
-                  ) : null}
-                </TouchableOpacity>
-              ))}
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Move Candidate</Text>
+                <Text style={styles.modalSub}>
+                  {selectedApplication?.candidate?.firstName} {selectedApplication?.candidate?.lastName}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setTransitionModalVisible(false)}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+              </TouchableOpacity>
             </View>
 
-            {/* Notes */}
-            <Text style={styles.inputLabel}>Stage Change Notes (Optional)</Text>
-            <TextInput
-              style={styles.notesInput}
-              placeholder="e.g. Cleared round 1 technical screen with high marks"
-              placeholderTextColor="#94A3B8"
-              multiline
-              numberOfLines={3}
-              value={transitionNotes}
-              onChangeText={setTransitionNotes}
-            />
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
+              <Text style={styles.sectionLabel}>Select Destination Stage</Text>
+              <View style={styles.stagePickerCol}>
+                {stages.map((stg) => {
+                  const isChosen = targetStageId === stg.id;
+                  return (
+                    <TouchableOpacity
+                      key={stg.id}
+                      style={[styles.stagePickerOption, isChosen && styles.stagePickerOptionActive]}
+                      onPress={() => setTargetStageId(stg.id)}
+                    >
+                      <Ionicons
+                        name={isChosen ? 'radio-button-on' : 'radio-button-off'}
+                        size={16}
+                        color={isChosen ? COLORS.primary : COLORS.textLight}
+                        style={{ marginRight: 6 }}
+                      />
+                      <Text style={[styles.stageOptionName, isChosen && styles.stageOptionNameActive]}>
+                        {stg.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
 
-            {/* Modal Actions */}
-            <View style={styles.modalActions}>
+              {isTargetReject && (
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.sectionLabel, { color: COLORS.error }]}>Rejection Reason *</Text>
+                  <TextInput
+                    style={[styles.modalInput, { height: 50, borderColor: '#FECACA' }]}
+                    placeholder="e.g. Lacking required experience"
+                    placeholderTextColor={COLORS.textLight}
+                    multiline
+                    value={rejectionReason}
+                    onChangeText={setRejectionReason}
+                  />
+                </View>
+              )}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.sectionLabel}>Notes (Optional)</Text>
+                <TextInput
+                  style={[styles.modalInput, { height: 60 }]}
+                  placeholder="Add interview summary..."
+                  placeholderTextColor={COLORS.textLight}
+                  multiline
+                  value={transitionNotes}
+                  onChangeText={setTransitionNotes}
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
               <TouchableOpacity
-                style={styles.cancelModalButton}
+                style={styles.cancelBtn}
                 onPress={() => setTransitionModalVisible(false)}
               >
-                <Text style={styles.cancelModalText}>Cancel</Text>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.confirmModalButton, stageMutation.isPending && { opacity: 0.6 }]}
+                style={[styles.confirmBtn, updateStageMutation.isPending && styles.disabledBtn]}
                 onPress={handleConfirmTransition}
-                disabled={stageMutation.isPending}
+                disabled={updateStageMutation.isPending}
               >
-                {stageMutation.isPending ? (
+                {updateStageMutation.isPending ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.confirmModalText}>Confirm Transition</Text>
+                  <Text style={styles.confirmBtnText}>Confirm Move</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -279,281 +384,299 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
   },
-  topBar: {
+  navHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    paddingTop: 14,
+    paddingBottom: 10,
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: COLORS.borderLight,
   },
-  backButton: {
-    padding: 6,
-    marginRight: 10,
+  backBtn: {
+    padding: 4,
+    marginRight: 6,
   },
-  titleArea: {
+  navTitleGroup: {
     flex: 1,
   },
-  jobTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
+  navTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
   },
-  subtext: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
+  navSub: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: COLORS.textSecondary,
   },
-  stageTabsWrapper: {
-    backgroundColor: '#FFFFFF',
+  stageTabsContainer: {
+    backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: COLORS.borderLight,
+    paddingVertical: 6,
   },
-  stageTabsContent: {
+  stageTabsScroll: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
   },
   stageTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#F1F5F9',
-    marginRight: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceSecondary,
+    marginRight: 6,
   },
-  activeStageTab: {
-    backgroundColor: '#4F46E5',
+  stageTabActive: {
+    backgroundColor: COLORS.primary,
   },
   stageTabText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#475569',
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
   },
-  activeStageTabText: {
-    color: '#FFFFFF',
-  },
-  badgeCount: {
-    backgroundColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 6,
-  },
-  activeBadgeCount: {
-    backgroundColor: '#3730A3',
-  },
-  badgeCountText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  activeBadgeCountText: {
+  stageTabTextActive: {
     color: '#FFFFFF',
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
-  candidateCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+  appCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: 14,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
   },
-  cardHeader: {
+  appCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  infoArea: {
+  candidateInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
+    marginRight: 6,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 8,
   },
-  candidateName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  candidateEmail: {
+  avatarText: {
+    fontFamily: FONTS.family,
     fontSize: 13,
-    color: '#64748B',
-    marginTop: 2,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
-  candidateCompany: {
-    fontSize: 12,
-    color: '#475569',
-    marginTop: 3,
-    fontWeight: '500',
+  metaCol: {
+    flex: 1,
   },
-  skillsRow: {
+  nameText: {
+    fontFamily: FONTS.family,
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  subText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: COLORS.textSecondary,
+    marginTop: 1,
+  },
+  stageIndicatorRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: COLORS.surfaceSecondary,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: RADIUS.xs,
+    marginBottom: 10,
   },
-  skillChip: {
-    backgroundColor: '#F1F5F9',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    marginRight: 6,
-    marginBottom: 4,
+  stageChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  skillText: {
-    fontSize: 11,
-    color: '#475569',
-    fontWeight: '600',
+  stageChipText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+    marginLeft: 3,
   },
-  moreSkillsText: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '600',
-    alignSelf: 'center',
+  appliedDateText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    color: COLORS.textMuted,
   },
-  actionBar: {
+  appCardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 12,
+    borderTopColor: COLORS.borderLight,
+    paddingTop: 8,
   },
-  detailButton: {
+  contactIconsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  circleActionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  advanceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#EEF2FF',
+    paddingVertical: 6,
+    borderRadius: RADIUS.sm,
   },
-  detailButtonText: {
-    fontSize: 12,
-    color: '#4F46E5',
-    fontWeight: '700',
-    marginLeft: 4,
-  },
-  moveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: '#4F46E5',
-  },
-  moveButtonText: {
-    fontSize: 12,
+  advanceButtonText: {
+    fontFamily: FONTS.family,
     color: '#FFFFFF',
-    fontWeight: '700',
-    marginLeft: 4,
+    fontSize: 11.5,
+    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: '85%',
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+    maxHeight: '90%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
-    marginBottom: 8,
-  },
-  modalStageList: {
-    marginBottom: 16,
-  },
-  modalStageOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 8,
-  },
-  activeModalStageOption: {
-    borderColor: '#4F46E5',
-    backgroundColor: '#EEF2FF',
-  },
-  modalStageOptionText: {
-    fontSize: 14,
+    fontFamily: FONTS.family,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#334155',
+    color: COLORS.textPrimary,
   },
-  activeModalStageOptionText: {
-    color: '#4F46E5',
-    fontWeight: '700',
+  modalSub: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '500',
+    marginTop: 1,
   },
-  notesInput: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 14,
-    color: '#0F172A',
-    textAlignVertical: 'top',
-    height: 70,
-    marginBottom: 20,
+  modalScroll: {
+    padding: 16,
   },
-  modalActions: {
+  sectionLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '500',
+    color: COLORS.textPrimary,
+    marginBottom: 6,
+  },
+  stagePickerCol: {
+    marginBottom: 12,
+  },
+  stagePickerOption: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 6,
   },
-  cancelModalButton: {
+  stagePickerOptionActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  stageOptionName: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    color: COLORS.textPrimary,
+  },
+  stageOptionNameActive: {
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  inputGroup: {
+    marginBottom: 12,
+  },
+  modalInput: {
+    fontFamily: FONTS.family,
+    backgroundColor: COLORS.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.sm,
+    padding: 8,
+    fontSize: 12.5,
+    color: COLORS.textPrimary,
+    textAlignVertical: 'top',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  cancelBtn: {
     flex: 1,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    height: 42,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
-    marginRight: 10,
+    justifyContent: 'center',
+    backgroundColor: COLORS.surfaceSecondary,
+    marginRight: 8,
   },
-  cancelModalText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#475569',
+  cancelBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
   },
-  confirmModalButton: {
+  confirmBtn: {
     flex: 2,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#4F46E5',
+    height: 42,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
   },
-  confirmModalText: {
-    fontSize: 14,
-    fontWeight: '700',
+  disabledBtn: {
+    opacity: 0.6,
+  },
+  confirmBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '600',
     color: '#FFFFFF',
   },
 });
