@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Linking,
   Platform,
+  Image,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,16 @@ import { useAuth } from '../../context/AuthContext';
 import { Header } from '../../components/Header';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+
+const getLogoUri = (url?: string) => {
+  if (!url) return null;
+  const base = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  const full =
+    url.startsWith('http') || url.startsWith('data:')
+      ? url
+      : `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${full}${full.includes('?') ? '&' : '?'}v=fixed2`;
+};
 
 export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const queryClient = useQueryClient();
@@ -149,7 +160,15 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
           {/* Logo & Brand Identity */}
           <View style={styles.brandRow}>
             <View style={styles.logoBox}>
-              <Ionicons name="business" size={26} color={COLORS.primary} />
+              {logoUrl ? (
+                <Image
+                  source={{ uri: getLogoUri(logoUrl) || '' }}
+                  style={styles.logoImg}
+                  resizeMode="contain"
+                />
+              ) : (
+                <Ionicons name="business" size={26} color={COLORS.primary} />
+              )}
             </View>
 
             <View style={styles.brandMeta}>
@@ -336,13 +355,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoBox: {
-    width: 44,
+    width: 68,
     height: 44,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    overflow: 'hidden',
+    padding: 3,
+  },
+  logoImg: {
+    width: '100%',
+    height: '100%',
   },
   brandMeta: {
     flex: 1,
