@@ -18,7 +18,7 @@ const getLogoUri = (url?: string) => {
     url.startsWith('http') || url.startsWith('data:')
       ? url
       : `${base}${url.startsWith('/') ? '' : '/'}${url}`;
-  return `${full}${full.includes('?') ? '&' : '?'}v=fixed2`;
+  return `${full}${full.includes('?') ? '&' : '?'}v=fixed3`;
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -125,7 +125,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logoImg: {
-    height: 40,
+    height: 25,
+    maxHeight: 25,
+    maxWidth: 135,
     alignSelf: 'flex-start',
   },
   fallbackBrand: {

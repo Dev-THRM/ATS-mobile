@@ -29,7 +29,7 @@ const getLogoUri = (url?: string) => {
     url.startsWith('http') || url.startsWith('data:')
       ? url
       : `${base}${url.startsWith('/') ? '' : '/'}${url}`;
-  return `${full}${full.includes('?') ? '&' : '?'}v=fixed2`;
+  return `${full}${full.includes('?') ? '&' : '?'}v=fixed3`;
 };
 
 export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
@@ -355,8 +355,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoBox: {
-    width: 68,
-    height: 44,
+    width: 96,
+    height: 42,
     borderRadius: RADIUS.sm,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
