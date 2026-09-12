@@ -60,6 +60,7 @@ export interface Candidate {
   githubUrl?: string;
   source?: string;
   tags?: string[];
+  metadata?: any;
   applications?: Application[];
   _count?: {
     applications: number;
@@ -79,6 +80,8 @@ export interface Application {
   currentStage: PipelineStage;
   status: ApplicationStatus;
   atsScore?: number;
+  resumeUrl?: string;
+  metadata?: any;
   source?: string;
   coverLetter?: string;
   rejectionReason?: string;
