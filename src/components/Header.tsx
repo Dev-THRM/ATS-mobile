@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../theme/theme';
@@ -11,6 +11,16 @@ interface HeaderProps {
   rightAction?: React.ReactNode;
 }
 
+const getLogoUri = (url?: string) => {
+  if (!url) return null;
+  const base = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  const full =
+    url.startsWith('http') || url.startsWith('data:')
+      ? url
+      : `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${full}${full.includes('?') ? '&' : '?'}v=fixed2`;
+};
+
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
@@ -18,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
 }) => {
   const { user, logout } = useAuth();
+  const [aspectRatio, setAspectRatio] = React.useState<number>(2.0);
 
   const getInitials = (name?: string) => {
     if (!name) return 'HR';
@@ -28,23 +39,42 @@ export const Header: React.FC<HeaderProps> = ({
 
   const userName = user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Recruiter';
   const orgName = user?.organization?.name || 'Talent Portal';
+  const logoUri = user?.organization?.logoUrl ? getLogoUri(user.organization.logoUrl) : null;
+
+  React.useEffect(() => {
+    if (logoUri) {
+      Image.getSize(
+        logoUri,
+        (width, height) => {
+          if (width > 0 && height > 0) {
+            setAspectRatio(width / height);
+          }
+        },
+        () => {}
+      );
+    }
+  }, [logoUri]);
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
-          <View style={styles.orgAvatar}>
-            <Ionicons name="sparkles" size={15} color="#FFFFFF" />
-          </View>
-          <View style={styles.orgInfo}>
-            <Text style={styles.orgName} numberOfLines={1}>
-              {orgName}
-            </Text>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>ATS PRO</Text>
+          {logoUri ? (
+            <Image
+              source={{ uri: logoUri }}
+              style={[styles.logoImg, { aspectRatio }]}
+              resizeMode="contain"
+            />
+          ) : (
+            <View style={styles.fallbackBrand}>
+              <View style={styles.orgAvatar}>
+                <Ionicons name="sparkles" size={15} color="#FFFFFF" />
+              </View>
+              <Text style={styles.orgName} numberOfLines={1}>
+                {orgName}
+              </Text>
             </View>
-          </View>
+          )}
         </View>
 
         <View style={styles.actionsRow}>
@@ -91,7 +121,16 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     flex: 1,
+  },
+  logoImg: {
+    height: 40,
+    alignSelf: 'flex-start',
+  },
+  fallbackBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   orgAvatar: {
     width: 30,
