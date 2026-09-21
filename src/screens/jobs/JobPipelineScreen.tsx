@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Linking,
   RefreshControl,
+  Switch,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +20,7 @@ import { atsApi } from '../../api/ats.api';
 import { ScorePill } from '../../components/ScorePill';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
-import { Application, PipelineStage } from '../../types/ats.types';
+import { Application, Candidate, PipelineStage } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
@@ -30,11 +31,22 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   const queryClient = useQueryClient();
 
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+
+  // Stage Transition Modal State
   const [transitionModalVisible, setTransitionModalVisible] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [targetStageId, setTargetStageId] = useState<string>('');
   const [transitionNotes, setTransitionNotes] = useState<string>('');
   const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [sendEmail, setSendEmail] = useState<boolean>(true);
+  const [joiningDate, setJoiningDate] = useState<string>('');
+  const [joiningDateError, setJoiningDateError] = useState<string | null>(null);
+
+  // Add Candidate to Pipeline Modal State
+  const [addCandidateModalVisible, setAddCandidateModalVisible] = useState(false);
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
+  const [selectedCandidateToAdd, setSelectedCandidateToAdd] = useState<Candidate | null>(null);
+  const [initialStageIdForAdd, setInitialStageIdForAdd] = useState<string>('');
 
   const { data: stagesData, isLoading: loadingStages } = useQuery({
     queryKey: ['job-stages', jobId],
@@ -51,6 +63,13 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
     queryFn: () => atsApi.getApplications({ jobId }),
   });
 
+  // Query talent pool for Add Candidate modal
+  const { data: talentPoolData, isLoading: loadingTalentPool } = useQuery({
+    queryKey: ['ats-talent-pool-search', candidateSearchQuery],
+    queryFn: () => atsApi.getCandidates({ search: candidateSearchQuery }),
+    enabled: addCandidateModalVisible,
+  });
+
   const stages: PipelineStage[] = Array.isArray(stagesData)
     ? stagesData
     : (stagesData as any)?.stages || (stagesData as any)?.data || [];
@@ -58,6 +77,10 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   const applications: Application[] = Array.isArray(applicationsData)
     ? applicationsData
     : (applicationsData as any)?.applications || (applicationsData as any)?.data || [];
+
+  const talentPoolCandidates: Candidate[] = Array.isArray(talentPoolData)
+    ? talentPoolData
+    : (talentPoolData as any)?.data || (talentPoolData as any)?.candidates || [];
 
   const filteredApps = applications.filter((app) => {
     if (!selectedStageId) return true;
@@ -70,7 +93,15 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
       payload,
     }: {
       appId: string;
-      payload: { stageId: string; notes?: string; rejectionReason?: string };
+      payload: {
+        stageId: string;
+        toStageId?: string;
+        notes?: string;
+        customNotes?: string;
+        rejectionReason?: string;
+        sendEmail?: boolean;
+        joiningDate?: string;
+      };
     }) => atsApi.updateApplicationStage(appId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job-applications', jobId] });
@@ -79,10 +110,46 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
       setSelectedApplication(null);
       setTransitionNotes('');
       setRejectionReason('');
+      setJoiningDate('');
+      setJoiningDateError(null);
       Alert.alert('Success', 'Candidate stage updated.');
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.message || 'Failed to move stage.';
+      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+    },
+  });
+
+  const removeCandidateMutation = useMutation({
+    mutationFn: (appId: string) => atsApi.deleteApplication(appId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-applications', jobId] });
+      queryClient.invalidateQueries({ queryKey: ['ats-dashboard'] });
+      Alert.alert('Success', 'Candidate removed from this pipeline.');
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || err.message || 'Failed to remove candidate.';
+      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+    },
+  });
+
+  const addCandidateMutation = useMutation({
+    mutationFn: ({ candidateId, stageId }: { candidateId: string; stageId?: string }) =>
+      atsApi.createApplication({
+        jobId,
+        candidateId,
+        stageId: stageId || stages[0]?.id,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job-applications', jobId] });
+      queryClient.invalidateQueries({ queryKey: ['ats-dashboard'] });
+      setAddCandidateModalVisible(false);
+      setSelectedCandidateToAdd(null);
+      setCandidateSearchQuery('');
+      Alert.alert('Success', 'Candidate assigned to this job pipeline!');
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.message || err.message || 'Failed to add candidate.';
       Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
     },
   });
@@ -92,6 +159,12 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
     setTargetStageId(app.currentStageId || (stages[0]?.id ?? ''));
     setTransitionNotes('');
     setRejectionReason('');
+    setSendEmail(!!app.candidate?.email);
+
+    // Default expected date of joining to 15 days ahead
+    const defaultDate = new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0];
+    setJoiningDate(defaultDate);
+    setJoiningDateError(null);
     setTransitionModalVisible(true);
   };
 
@@ -104,19 +177,54 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
       chosenStage?.name?.toLowerCase().includes('reject') ||
       chosenStage?.stageType?.toLowerCase().includes('reject');
 
+    const isOfferStage =
+      chosenStage?.stageType === 'OFFER' ||
+      chosenStage?.stageType === 'HIRED' ||
+      chosenStage?.name?.toLowerCase().includes('offer') ||
+      chosenStage?.name?.toLowerCase().includes('hire');
+
     if (isRejectStage && !rejectionReason.trim()) {
       Alert.alert('Reason Required', 'Please document why candidate was rejected.');
       return;
     }
 
+    if (isOfferStage && !joiningDate.trim()) {
+      setJoiningDateError('Expected date of joining is required for an offer.');
+      Alert.alert('Joining Date Required', 'Please specify the candidate’s expected date of joining.');
+      return;
+    }
+
+    setJoiningDateError(null);
+
     updateStageMutation.mutate({
       appId: selectedApplication.id,
       payload: {
         stageId: targetStageId,
+        toStageId: targetStageId,
         notes: transitionNotes.trim() || undefined,
+        customNotes: transitionNotes.trim() || undefined,
         rejectionReason: isRejectStage ? rejectionReason.trim() : undefined,
+        sendEmail: selectedApplication.candidate?.email ? sendEmail : false,
+        joiningDate: isOfferStage && joiningDate.trim() ? joiningDate.trim() : undefined,
       },
     });
+  };
+
+  const handleRemoveCandidate = (app: Application) => {
+    const candidateName =
+      `${app.candidate?.firstName || ''} ${app.candidate?.lastName || ''}`.trim() || 'Candidate';
+    Alert.alert(
+      'Remove Candidate',
+      `Are you sure you want to remove ${candidateName} from this job pipeline?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeCandidateMutation.mutate(app.id),
+        },
+      ],
+    );
   };
 
   const handleCallCandidate = (phone?: string) => {
@@ -128,7 +236,8 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   };
 
   const renderCandidateCard = ({ item }: { item: Application }) => {
-    const candidateName = `${item.candidate?.firstName || ''} ${item.candidate?.lastName || ''}`.trim() || 'Candidate';
+    const candidateName =
+      `${item.candidate?.firstName || ''} ${item.candidate?.lastName || ''}`.trim() || 'Candidate';
     const currentStageName = item.currentStage?.name || 'Sourced';
 
     return (
@@ -193,6 +302,14 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                 <Ionicons name="mail-outline" size={14} color={COLORS.primary} />
               </TouchableOpacity>
             ) : null}
+
+            {/* Remove Candidate Button */}
+            <TouchableOpacity
+              style={[styles.circleActionBtn, styles.deleteActionBtn, { marginLeft: 6 }]}
+              onPress={() => handleRemoveCandidate(item)}
+            >
+              <Ionicons name="trash-outline" size={14} color={COLORS.error} />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -214,9 +331,15 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
     selectedTargetStage?.name?.toLowerCase().includes('reject') ||
     selectedTargetStage?.stageType?.toLowerCase().includes('reject');
 
+  const isTargetOfferOrHired =
+    selectedTargetStage?.stageType === 'OFFER' ||
+    selectedTargetStage?.stageType === 'HIRED' ||
+    selectedTargetStage?.name?.toLowerCase().includes('offer') ||
+    selectedTargetStage?.name?.toLowerCase().includes('hire');
+
   return (
     <View style={styles.container}>
-      {/* Top Header */}
+      {/* Top Header with Add Candidate Action */}
       <View style={styles.navHeader}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
@@ -227,16 +350,37 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
           </Text>
           <Text style={styles.navSub}>Kanban Stages • {applications.length} Candidates</Text>
         </View>
+
+        {/* Add Candidate Button */}
+        <TouchableOpacity
+          style={styles.addCandidateHeaderBtn}
+          onPress={() => {
+            setCandidateSearchQuery('');
+            setSelectedCandidateToAdd(null);
+            setInitialStageIdForAdd(stages[0]?.id || '');
+            setAddCandidateModalVisible(true);
+          }}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="person-add" size={14} color="#FFFFFF" />
+          <Text style={styles.addCandidateHeaderBtnText}>Add</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Stage Tab Filters */}
       <View style={styles.stageTabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stageTabsScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.stageTabsScroll}
+        >
           <TouchableOpacity
             style={[styles.stageTab, selectedStageId === null && styles.stageTabActive]}
             onPress={() => setSelectedStageId(null)}
           >
-            <Text style={[styles.stageTabText, selectedStageId === null && styles.stageTabTextActive]}>
+            <Text
+              style={[styles.stageTabText, selectedStageId === null && styles.stageTabTextActive]}
+            >
               All ({applications.length})
             </Text>
           </TouchableOpacity>
@@ -269,7 +413,11 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
           renderItem={renderCandidateCard}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[COLORS.primary]} />
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+              colors={[COLORS.primary]}
+            />
           }
           ListEmptyComponent={
             <EmptyState
@@ -294,7 +442,8 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
               <View>
                 <Text style={styles.modalTitle}>Move Candidate</Text>
                 <Text style={styles.modalSub}>
-                  {selectedApplication?.candidate?.firstName} {selectedApplication?.candidate?.lastName}
+                  {selectedApplication?.candidate?.firstName}{' '}
+                  {selectedApplication?.candidate?.lastName}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setTransitionModalVisible(false)}>
@@ -319,7 +468,12 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                         color={isChosen ? COLORS.primary : COLORS.textLight}
                         style={{ marginRight: 6 }}
                       />
-                      <Text style={[styles.stageOptionName, isChosen && styles.stageOptionNameActive]}>
+                      <Text
+                        style={[
+                          styles.stageOptionName,
+                          isChosen && styles.stageOptionNameActive,
+                        ]}
+                      >
                         {stg.name}
                       </Text>
                     </TouchableOpacity>
@@ -327,9 +481,74 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                 })}
               </View>
 
+              {/* Offer Stage: Expected Date of Joining Prompt */}
+              {isTargetOfferOrHired && (
+                <View style={styles.offerPromptCard}>
+                  <View style={styles.offerPromptHeader}>
+                    <Ionicons name="calendar" size={16} color="#059669" />
+                    <Text style={styles.offerPromptTitle}>
+                      Expected Date of Joining <Text style={{ color: COLORS.error }}>*</Text>
+                    </Text>
+                  </View>
+                  <Text style={styles.offerPromptDesc}>
+                    Specify the candidate’s start date. This will be sent directly in their formal offer letter.
+                  </Text>
+
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      styles.dateInput,
+                      joiningDateError ? { borderColor: COLORS.error } : null,
+                    ]}
+                    placeholder="YYYY-MM-DD (e.g. 2026-10-06)"
+                    placeholderTextColor={COLORS.textLight}
+                    value={joiningDate}
+                    onChangeText={(val) => {
+                      setJoiningDate(val);
+                      setJoiningDateError(null);
+                    }}
+                  />
+
+                  {/* Quick Preset Buttons */}
+                  <View style={styles.presetsRow}>
+                    <TouchableOpacity
+                      style={styles.presetChip}
+                      onPress={() =>
+                        setJoiningDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])
+                      }
+                    >
+                      <Text style={styles.presetChipText}>+7 Days</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.presetChip}
+                      onPress={() =>
+                        setJoiningDate(new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0])
+                      }
+                    >
+                      <Text style={styles.presetChipText}>+15 Days</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.presetChip}
+                      onPress={() =>
+                        setJoiningDate(new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0])
+                      }
+                    >
+                      <Text style={styles.presetChipText}>+30 Days</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {joiningDateError && (
+                    <Text style={styles.errorText}>{joiningDateError}</Text>
+                  )}
+                </View>
+              )}
+
+              {/* Rejection Reason Prompt */}
               {isTargetReject && (
                 <View style={styles.inputGroup}>
-                  <Text style={[styles.sectionLabel, { color: COLORS.error }]}>Rejection Reason *</Text>
+                  <Text style={[styles.sectionLabel, { color: COLORS.error }]}>
+                    Rejection Reason *
+                  </Text>
                   <TextInput
                     style={[styles.modalInput, { height: 50, borderColor: '#FECACA' }]}
                     placeholder="e.g. Lacking required experience"
@@ -341,11 +560,30 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                 </View>
               )}
 
+              {/* Email Notification Switch Card */}
+              {selectedApplication?.candidate?.email && (
+                <View style={styles.switchCard}>
+                  <View style={styles.switchCardTextCol}>
+                    <Text style={styles.switchCardTitle}>Send Email Notification</Text>
+                    <Text style={styles.switchCardSubtitle}>
+                      Candidate will receive an email update regarding their progression.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={sendEmail}
+                    onValueChange={setSendEmail}
+                    trackColor={{ false: COLORS.border, true: COLORS.primary }}
+                    thumbColor="#FFFFFF"
+                  />
+                </View>
+              )}
+
+              {/* Recruiter Notes */}
               <View style={styles.inputGroup}>
-                <Text style={styles.sectionLabel}>Notes (Optional)</Text>
+                <Text style={styles.sectionLabel}>Notes / Remarks (Optional)</Text>
                 <TextInput
                   style={[styles.modalInput, { height: 60 }]}
-                  placeholder="Add interview summary..."
+                  placeholder="Add status notes or special candidate remarks..."
                   placeholderTextColor={COLORS.textLight}
                   multiline
                   value={transitionNotes}
@@ -371,6 +609,158 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
                   <Text style={styles.confirmBtnText}>Confirm Move</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Candidate to Pipeline Modal */}
+      <Modal
+        visible={addCandidateModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAddCandidateModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Add Candidate to Pipeline</Text>
+                <Text style={styles.modalSub}>{jobTitle}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setAddCandidateModalVisible(false)}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.addModalBody}>
+              {/* Search Candidates Input */}
+              <View style={styles.searchBar}>
+                <Ionicons name="search" size={16} color={COLORS.textLight} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search by name, skill, or email..."
+                  placeholderTextColor={COLORS.textLight}
+                  value={candidateSearchQuery}
+                  onChangeText={setCandidateSearchQuery}
+                />
+                {candidateSearchQuery ? (
+                  <TouchableOpacity onPress={() => setCandidateSearchQuery('')}>
+                    <Ionicons name="close-circle" size={16} color={COLORS.textLight} />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              {/* Initial Stage Selector */}
+              <View style={styles.initialStageRow}>
+                <Text style={styles.initialStageLabel}>Initial Stage:</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {stages.map((stg) => {
+                    const isSelected = (initialStageIdForAdd || stages[0]?.id) === stg.id;
+                    return (
+                      <TouchableOpacity
+                        key={stg.id}
+                        style={[styles.smallStageChip, isSelected && styles.smallStageChipActive]}
+                        onPress={() => setInitialStageIdForAdd(stg.id)}
+                      >
+                        <Text
+                          style={[
+                            styles.smallStageChipText,
+                            isSelected && styles.smallStageChipTextActive,
+                          ]}
+                        >
+                          {stg.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* Talent Pool Candidates List */}
+              {loadingTalentPool ? (
+                <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 20 }} />
+              ) : (
+                <FlatList
+                  data={talentPoolCandidates}
+                  keyExtractor={(cand) => cand.id}
+                  style={{ maxHeight: 280 }}
+                  renderItem={({ item }) => {
+                    const isSelected = selectedCandidateToAdd?.id === item.id;
+                    const alreadyInPipeline = applications.some((a) => a.candidateId === item.id);
+                    const fullName = `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Candidate';
+
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.candidatePickRow,
+                          isSelected && styles.candidatePickRowActive,
+                          alreadyInPipeline && { opacity: 0.5 },
+                        ]}
+                        disabled={alreadyInPipeline}
+                        onPress={() => setSelectedCandidateToAdd(item)}
+                      >
+                        <View style={styles.candidatePickAvatar}>
+                          <Text style={styles.candidatePickAvatarText}>
+                            {item.firstName?.[0] || 'C'}
+                          </Text>
+                        </View>
+                        <View style={{ flex: 1, marginRight: 8 }}>
+                          <Text style={styles.candidatePickName}>{fullName}</Text>
+                          <Text style={styles.candidatePickSub} numberOfLines={1}>
+                            {item.currentTitle || 'Applicant'} • {item.email || 'No email'}
+                          </Text>
+                        </View>
+                        {alreadyInPipeline ? (
+                          <Text style={styles.alreadyBadge}>In Pipeline</Text>
+                        ) : (
+                          <Ionicons
+                            name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+                            size={20}
+                            color={isSelected ? COLORS.primary : COLORS.textLight}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    );
+                  }}
+                  ListEmptyComponent={
+                    <Text style={styles.emptyPoolText}>
+                      No candidates found matching query.
+                    </Text>
+                  }
+                />
+              )}
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setAddCandidateModalVisible(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.confirmBtn,
+                  (!selectedCandidateToAdd || addCandidateMutation.isPending) && styles.disabledBtn,
+                ]}
+                disabled={!selectedCandidateToAdd || addCandidateMutation.isPending}
+                onPress={() => {
+                  if (selectedCandidateToAdd) {
+                    addCandidateMutation.mutate({
+                      candidateId: selectedCandidateToAdd.id,
+                      stageId: initialStageIdForAdd || stages[0]?.id,
+                    });
+                  }
+                }}
+              >
+                {addCandidateMutation.isPending ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.confirmBtnText}>Add Candidate</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -413,6 +803,21 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 11.5,
     color: COLORS.textSecondary,
+  },
+  addCandidateHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: RADIUS.sm,
+    gap: 4,
+  },
+  addCandidateHeaderBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   stageTabsContainer: {
     backgroundColor: COLORS.surface,
@@ -543,6 +948,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  deleteActionBtn: {
+    backgroundColor: '#FEE2E2',
+  },
   advanceButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -626,6 +1034,90 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '500',
   },
+  offerPromptCard: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: RADIUS.md,
+    padding: 12,
+    marginBottom: 14,
+  },
+  offerPromptHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  offerPromptTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  offerPromptDesc: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#047857',
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  dateInput: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#6EE7B7',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  presetsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  presetChip: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#6EE7B7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+  },
+  presetChipText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#065F46',
+  },
+  errorText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.error,
+    marginTop: 4,
+  },
+  switchCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: 12,
+    marginBottom: 12,
+  },
+  switchCardTextCol: {
+    flex: 1,
+    marginRight: 10,
+  },
+  switchCardTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  switchCardSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
   inputGroup: {
     marginBottom: 12,
   },
@@ -678,5 +1170,114 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  addModalBody: {
+    padding: 16,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surfaceSecondary,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    height: 38,
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    color: COLORS.textPrimary,
+  },
+  initialStageRow: {
+    marginBottom: 10,
+  },
+  initialStageLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  smallStageChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginRight: 6,
+  },
+  smallStageChipActive: {
+    backgroundColor: COLORS.primaryLight,
+    borderColor: COLORS.primary,
+  },
+  smallStageChipText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
+  smallStageChipTextActive: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  candidatePickRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 6,
+    backgroundColor: COLORS.surface,
+  },
+  candidatePickRowActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  candidatePickAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  candidatePickAvatarText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  candidatePickName: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  candidatePickSub: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginTop: 1,
+  },
+  alreadyBadge: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    color: COLORS.textMuted,
+    backgroundColor: COLORS.surfaceSecondary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.xs,
+  },
+  emptyPoolText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginVertical: 16,
   },
 });
