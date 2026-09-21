@@ -100,10 +100,30 @@ export const atsApi = {
 
   updateApplicationStage: async (
     applicationId: string,
-    payload: { stageId: string; notes?: string; rejectionReason?: string },
+    payload: {
+      stageId: string;
+      toStageId?: string;
+      notes?: string;
+      customNotes?: string;
+      rejectionReason?: string;
+      sendEmail?: boolean;
+      joiningDate?: string;
+    },
   ): Promise<Application> => {
-    const { data } = await apiClient.patch(`/ats/applications/${applicationId}/stage`, payload);
+    const { data } = await apiClient.patch(`/ats/applications/${applicationId}/stage`, {
+      stageId: payload.stageId,
+      toStageId: payload.toStageId || payload.stageId,
+      notes: payload.notes,
+      customNotes: payload.customNotes || payload.notes,
+      rejectionReason: payload.rejectionReason,
+      sendEmail: payload.sendEmail,
+      joiningDate: payload.joiningDate,
+    });
     return data?.application || data;
+  },
+
+  deleteApplication: async (applicationId: string): Promise<void> => {
+    await apiClient.delete(`/ats/applications/${applicationId}`);
   },
 
   // Interviews
