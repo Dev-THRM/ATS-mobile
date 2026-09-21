@@ -11,10 +11,12 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const LoginScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const { login, isLoading } = useAuth();
   const [orgSlug, setOrgSlug] = useState('acme-corp');
   const [email, setEmail] = useState('admin@acme.com');
@@ -61,7 +63,13 @@ export const LoginScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 16,
+            paddingBottom: Math.max(insets.bottom, 20),
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
