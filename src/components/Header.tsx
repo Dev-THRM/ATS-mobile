@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../theme/theme';
 import { API_BASE_URL } from '../api/client';
 
@@ -28,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   showLogout = false,
   rightAction,
 }) => {
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
 
   const getInitials = (name?: string) => {
@@ -41,8 +43,10 @@ export const Header: React.FC<HeaderProps> = ({
   const orgName = user?.organization?.name || 'Talent Portal';
   const logoUri = user?.organization?.logoUrl ? getLogoUri(user.organization.logoUrl) : null;
 
+  const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 16) + 6;
+
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { paddingTop: topPadding }]}>
       {/* Top Organization Brand & Profile Row */}
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
@@ -101,7 +105,6 @@ const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 14 : 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
