@@ -16,6 +16,7 @@ import { StageBadge } from '../../components/StageBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Application, Candidate } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+import { API_BASE_URL } from '../../api/client';
 
 const formatCandidateName = (first?: string, last?: string) => {
   let full = `${first || ''} ${last || ''}`.trim();
@@ -36,9 +37,26 @@ const getInitials = (name: string) => {
 
 const getResumeUri = (url?: string) => {
   if (!url) return null;
-  const base = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+    try {
+      const fileIdMatch =
+        url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+        url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/) ||
+        url.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+        url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+      if (fileIdMatch && fileIdMatch[1]) {
+        return `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+      }
+      return url.replace(/\/view(\?.*)?$/, '/preview').replace(/\/edit(\?.*)?$/, '/preview');
+    } catch {
+      return url;
+    }
+  }
+
   if (url.startsWith('http')) return url;
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+  const serverRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  return `${serverRoot}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 export const CandidateDetailScreen: React.FC<{ route: any; navigation: any }> = ({
