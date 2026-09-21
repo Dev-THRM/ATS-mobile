@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, View, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { JobsListScreen } from '../screens/jobs/JobsListScreen';
@@ -46,6 +47,10 @@ const SettingsNavigator = () => (
 );
 
 export const MainTabNavigator: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 6);
+  const barHeight = 54 + (Platform.OS === 'ios' ? Math.max(insets.bottom, 20) : 8);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -56,8 +61,8 @@ export const MainTabNavigator: React.FC = () => {
           backgroundColor: COLORS.surface,
           borderTopWidth: 1,
           borderTopColor: COLORS.borderLight,
-          height: Platform.OS === 'ios' ? 84 : 62,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 6,
+          height: barHeight,
+          paddingBottom: bottomPadding,
           paddingTop: 6,
           ...SHADOWS.sm,
         },
