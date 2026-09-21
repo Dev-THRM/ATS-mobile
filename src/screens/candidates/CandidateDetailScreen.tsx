@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { atsApi } from '../../api/ats.api';
 import { ScorePill } from '../../components/ScorePill';
 import { StageBadge } from '../../components/StageBadge';
@@ -63,8 +64,11 @@ export const CandidateDetailScreen: React.FC<{ route: any; navigation: any }> = 
   route,
   navigation,
 }) => {
+  const insets = useSafeAreaInsets();
   const { candidateId } = route.params;
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'RESUME' | 'APPLICATIONS'>('OVERVIEW');
+
+  const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 14) + 6;
 
   const { data: candidate, isLoading, refetch, isRefetching } = useQuery<Candidate>({
     queryKey: ['candidate-detail', candidateId],
@@ -138,7 +142,7 @@ export const CandidateDetailScreen: React.FC<{ route: any; navigation: any }> = 
   return (
     <View style={styles.container}>
       {/* Top Header Bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: topPadding }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -526,7 +530,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 14 : 16,
     paddingBottom: 14,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
