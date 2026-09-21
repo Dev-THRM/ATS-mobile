@@ -1,12 +1,30 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const ACCESS_TOKEN_KEY = 'ats_access_token';
 const REFRESH_TOKEN_KEY = 'ats_refresh_token';
 
-// Automatically resolve local backend host based on platform
+// Automatically resolve backend host based on platform and Expo environment
 const getBaseUrl = (): string => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return `${process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '')}/api/v1`;
+  }
+
+  // If running via Expo Go or Dev Client on a physical phone, resolve dev machine's LAN IP
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ||
+    (Constants as any)?.manifest?.debuggerHost;
+
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
+      return `http://${ip}:3000/api/v1`;
+    }
+  }
+
   if (Platform.OS === 'android') {
     // 10.0.2.2 is Android Emulator alias for Host loopback (localhost)
     return 'http://10.0.2.2:3000/api/v1';
