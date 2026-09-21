@@ -13,10 +13,12 @@ import {
   Linking,
   RefreshControl,
   Switch,
+  Platform,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { atsApi } from '../../api/ats.api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScorePill } from '../../components/ScorePill';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
@@ -27,8 +29,11 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   route,
   navigation,
 }) => {
+  const insets = useSafeAreaInsets();
   const { jobId, jobTitle } = route.params;
   const queryClient = useQueryClient();
+
+  const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 14) + 6;
 
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
 
@@ -340,7 +345,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   return (
     <View style={styles.container}>
       {/* Top Header with Add Candidate Action */}
-      <View style={styles.navHeader}>
+      <View style={[styles.navHeader, { paddingTop: topPadding }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
@@ -780,7 +785,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 14,
     paddingBottom: 10,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
