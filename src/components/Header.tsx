@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../theme/theme';
+import { API_BASE_URL } from '../api/client';
 
 interface HeaderProps {
   title: string;
@@ -13,12 +14,12 @@ interface HeaderProps {
 
 const getLogoUri = (url?: string) => {
   if (!url) return null;
-  const base = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  const serverRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
   const full =
     url.startsWith('http') || url.startsWith('data:')
       ? url
-      : `${base}${url.startsWith('/') ? '' : '/'}${url}`;
-  return `${full}${full.includes('?') ? '&' : '?'}v=fixed3`;
+      : `${serverRoot}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${full}${full.includes('?') ? '&' : '?'}v=cropped_v6`;
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,7 +29,6 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
 }) => {
   const { user, logout } = useAuth();
-  const [aspectRatio, setAspectRatio] = React.useState<number>(2.0);
 
   const getInitials = (name?: string) => {
     if (!name) return 'HR';
@@ -41,36 +41,30 @@ export const Header: React.FC<HeaderProps> = ({
   const orgName = user?.organization?.name || 'Talent Portal';
   const logoUri = user?.organization?.logoUrl ? getLogoUri(user.organization.logoUrl) : null;
 
-  React.useEffect(() => {
-    if (logoUri) {
-      Image.getSize(
-        logoUri,
-        (width, height) => {
-          if (width > 0 && height > 0) {
-            setAspectRatio(width / height);
-          }
-        },
-        () => {}
-      );
-    }
-  }, [logoUri]);
-
   return (
     <View style={styles.wrapper}>
+      {/* Top Organization Brand & Profile Row */}
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
           {logoUri ? (
-            <Image
-              source={{ uri: logoUri }}
-              style={[styles.logoImg, { aspectRatio }]}
-              resizeMode="contain"
-            />
-          ) : (
-            <View style={styles.fallbackBrand}>
-              <View style={styles.orgAvatar}>
-                <Ionicons name="sparkles" size={15} color="#FFFFFF" />
+            <View style={styles.brandPill}>
+              <View style={styles.logoBadgeContainer}>
+                <Image
+                  source={{ uri: logoUri }}
+                  style={styles.logoImg}
+                  resizeMode="contain"
+                />
               </View>
-              <Text style={styles.orgName} numberOfLines={1}>
+              <Text style={styles.orgNameBadge} numberOfLines={1}>
+                {orgName}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.brandPill}>
+              <View style={styles.fallbackAvatar}>
+                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+              </View>
+              <Text style={styles.orgNameBadge} numberOfLines={1}>
                 {orgName}
               </Text>
             </View>
@@ -82,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {showLogout && (
             <TouchableOpacity onPress={logout} style={styles.logoutBtn} activeOpacity={0.7}>
-              <Ionicons name="log-out-outline" size={17} color={COLORS.error} />
+              <Ionicons name="log-out-outline" size={16} color={COLORS.error} />
             </TouchableOpacity>
           )}
 
@@ -92,6 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       </View>
 
+      {/* Screen Title & Subtitle */}
       <View style={styles.titleRow}>
         <View style={styles.textGroup}>
           <Text style={styles.title}>{title}</Text>
@@ -104,109 +99,100 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 18,
-    paddingTop: Platform.OS === 'ios' ? 12 : 14,
-    paddingBottom: 14,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 14 : 16,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    borderBottomColor: '#F1F5F9',
     ...SHADOWS.sm,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 14,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
     flex: 1,
+    marginRight: 10,
   },
-  logoImg: {
-    height: 25,
-    maxHeight: 25,
-    maxWidth: 135,
-    alignSelf: 'flex-start',
-  },
-  fallbackBrand: {
+  brandPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 22,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    gap: 8,
+    maxWidth: '90%',
   },
-  orgAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.primary,
+  logoBadgeContainer: {
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    overflow: 'hidden',
   },
-  orgInfo: {
-    flexDirection: 'row',
+  logoImg: {
+    width: 24,
+    height: 24,
+  },
+  fallbackAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#2563EB',
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
   },
-  orgName: {
+  orgNameBadge: {
     fontFamily: FONTS.family,
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginRight: 6,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.successLight,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: COLORS.success,
-    marginRight: 4,
-  },
-  liveText: {
-    fontFamily: FONTS.family,
-    fontSize: 9,
-    fontWeight: '600',
-    color: COLORS.success,
-    letterSpacing: 0.3,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    flexShrink: 1,
   },
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   logoutBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.errorLight,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 6,
   },
   userAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.primaryLight,
-    borderWidth: 1,
-    borderColor: COLORS.borderSky,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 2,
   },
   userAvatarText: {
     fontFamily: FONTS.family,
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   titleRow: {
     flexDirection: 'row',
@@ -218,16 +204,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: FONTS.family,
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.2,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
-    color: COLORS.textMuted,
+    fontSize: 13,
+    color: '#64748B',
     marginTop: 2,
-    fontWeight: '400',
+    fontWeight: '500',
   },
 });
