@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 export const COLORS = {
-  // Light Blue & White Primary Brand
+  // Light Blue & Grey White Primary Brand
   primary: '#0284C7', // Sky 600
   primaryHover: '#0369A1', // Sky 700
   primaryLight: '#E0F2FE', // Sky 100
@@ -9,8 +9,8 @@ export const COLORS = {
   primaryDark: '#075985', // Sky 800
 
   // Secondary Accents
-  accent: '#2563EB', // Blue 600
-  accentLight: '#EFF6FF', // Blue 50
+  accent: '#2563EB', // Lndon Blue 600
+  accentLight: '#EFF6FF', // Lndon Blue 50
   teal: '#0D9488',
   tealLight: '#F0FDFA',
 

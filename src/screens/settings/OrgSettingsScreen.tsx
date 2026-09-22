@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   logoContainer: {
-    width: 60,
+    width: 90,
     height: 60,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: 4,
+    padding: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -523,10 +523,11 @@ const styles = StyleSheet.create({
   },
   brandHeroName: {
     fontFamily: FONTS.family,
-    fontSize: 15.5,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 20,
+    lineHeight: 23,
+    letterSpacing: -0.3,
   },
   subdomainTag: {
     flexDirection: 'row',

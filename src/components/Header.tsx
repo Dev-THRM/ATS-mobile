@@ -51,22 +51,17 @@ export const Header: React.FC<HeaderProps> = ({
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
           {logoUri ? (
-            <View style={styles.brandPill}>
-              <View style={styles.logoBadgeContainer}>
-                <Image
-                  source={{ uri: logoUri }}
-                  style={styles.logoImg}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.orgNameBadge} numberOfLines={1}>
-                {orgName}
-              </Text>
+            <View style={styles.logoBadgeContainer}>
+              <Image
+                source={{ uri: logoUri }}
+                style={styles.logoImg}
+                resizeMode="contain"
+              />
             </View>
           ) : (
-            <View style={styles.brandPill}>
+            <View style={styles.brandContainer}>
               <View style={styles.fallbackAvatar}>
-                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+                <Ionicons name="sparkles" size={18} color="#FFFFFF" />
               </View>
               <Text style={styles.orgNameBadge} numberOfLines={1}>
                 {orgName}
@@ -122,44 +117,43 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
-  brandPill: {
+  brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 22,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    gap: 8,
-    maxWidth: '90%',
+    gap: 10,
+    flexShrink: 1,
   },
   logoBadgeContainer: {
-    width: 26,
-    height: 26,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
+    height: 38,
+    minWidth: 40,
+    maxWidth: 180,
+    alignItems: 'flex-start',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   logoImg: {
-    width: 24,
-    height: 24,
+    height: 36,
+    width: 150,
   },
   fallbackAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   orgNameBadge: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#0F172A',
+    letterSpacing: -0.2,
     flexShrink: 1,
   },
   actionsRow: {

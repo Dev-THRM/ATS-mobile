@@ -30,7 +30,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   navigation,
 }) => {
   const insets = useSafeAreaInsets();
-  const { jobId, jobTitle } = route.params;
+  const { jobId, jobTitle } = route?.params || {};
   const queryClient = useQueryClient();
 
   const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 14) + 6;
@@ -53,9 +53,15 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   const [selectedCandidateToAdd, setSelectedCandidateToAdd] = useState<Candidate | null>(null);
   const [initialStageIdForAdd, setInitialStageIdForAdd] = useState<string>('');
 
-  const { data: stagesData, isLoading: loadingStages } = useQuery({
+  const {
+    data: stagesData,
+    isLoading: loadingStages,
+    error: stagesError,
+    refetch: refetchStages,
+  } = useQuery({
     queryKey: ['job-stages', jobId],
     queryFn: () => atsApi.getJobStages(jobId),
+    enabled: !!jobId,
   });
 
   const {
@@ -63,9 +69,11 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
     isLoading: loadingApps,
     refetch,
     isRefetching,
+    error: appsError,
   } = useQuery({
     queryKey: ['job-applications', jobId],
     queryFn: () => atsApi.getApplications({ jobId }),
+    enabled: !!jobId,
   });
 
   // Query talent pool for Add Candidate modal
@@ -280,10 +288,12 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
           </View>
 
           <Text style={styles.appliedDateText}>
-            {new Date(item.appliedAt).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-            })}
+            {item.appliedAt && !isNaN(new Date(item.appliedAt).getTime())
+              ? new Date(item.appliedAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : 'Recent'}
           </Text>
         </View>
 
@@ -409,7 +419,29 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
       </View>
 
       {/* Candidate Cards in Pipeline */}
-      {loadingApps && !isRefetching ? (
+      {!jobId ? (
+        <EmptyState
+          iconName="alert-circle-outline"
+          title="Job Opening Not Specified"
+          description="Please select a valid job opening from the Positions list."
+        />
+      ) : (stagesError || appsError) && !applications.length ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="cloud-offline-outline" size={38} color={COLORS.error} />
+          <Text style={styles.errorTitle}>Could not load pipeline</Text>
+          <Text style={styles.errorSubtitle}>Please check your connection and try again.</Text>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={() => {
+              refetchStages();
+              refetch();
+            }}
+          >
+            <Ionicons name="refresh" size={14} color="#FFFFFF" />
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : loadingApps && !isRefetching ? (
         <LoadingSpinner message="Loading candidates..." />
       ) : (
         <FlatList
@@ -1283,5 +1315,41 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textAlign: 'center',
     marginVertical: 16,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    marginTop: 40,
+  },
+  errorTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginTop: 12,
+  },
+  errorSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: RADIUS.md,
+    gap: 6,
+  },
+  retryBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
