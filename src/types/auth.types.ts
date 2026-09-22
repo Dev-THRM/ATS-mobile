@@ -35,3 +35,24 @@ export interface LoginCredentials {
   password: string;
   organizationSlug: string;
 }
+
+export interface OrganizationRole {
+  id: string;
+  name: string;
+  type: string;
+  description?: string;
+  permissions?: string[];
+  isCustom?: boolean;
+}
+
+export interface OrganizationMember {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  avatarUrl?: string;
+  isActive: boolean;
+  createdAt: string;
+  role: OrganizationRole;
+}

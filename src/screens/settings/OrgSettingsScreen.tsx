@@ -20,6 +20,7 @@ import { authApi } from '../../api/auth.api';
 import { useAuth } from '../../context/AuthContext';
 import { Header } from '../../components/Header';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { TeamSettingsTab } from './TeamSettingsTab';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 import { API_BASE_URL } from '../../api/client';
 
@@ -46,6 +47,13 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
   const { data: orgData, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['organization-settings'],
     queryFn: authApi.getOrganization,
+  });
+
+  const [activeTab, setActiveTab] = useState<'profile' | 'team'>('profile');
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['organization-members'],
+    queryFn: authApi.getOrganizationMembers,
   });
 
   useEffect(() => {
@@ -148,6 +156,54 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
     <View style={styles.container}>
       <Header title="Settings & Workspace" subtitle="Organization & Team Controls" />
 
+      {/* Tabs Switcher */}
+      <View style={styles.topTabBar}>
+        <TouchableOpacity
+          style={[styles.topTabBtn, activeTab === 'profile' && styles.topTabBtnActive]}
+          onPress={() => setActiveTab('profile')}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="business-outline"
+            size={15}
+            color={activeTab === 'profile' ? '#2563EB' : '#64748B'}
+          />
+          <Text
+            style={[
+              styles.topTabText,
+              activeTab === 'profile' && styles.topTabTextActive,
+            ]}
+          >
+            Company Profile
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.topTabBtn, activeTab === 'team' && styles.topTabBtnActive]}
+          onPress={() => setActiveTab('team')}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="people-outline"
+            size={15}
+            color={activeTab === 'team' ? '#2563EB' : '#64748B'}
+          />
+          <Text
+            style={[
+              styles.topTabText,
+              activeTab === 'team' && styles.topTabTextActive,
+            ]}
+          >
+            Team Access
+          </Text>
+          {members.length > 0 && (
+            <View style={styles.topTabBadge}>
+              <Text style={styles.topTabBadgeText}>{members.length}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -159,8 +215,12 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
           />
         }
       >
-        {/* 1. Organization Identity Card */}
-        <View style={styles.sectionCard}>
+        {activeTab === 'team' ? (
+          <TeamSettingsTab />
+        ) : (
+          <>
+            {/* 1. Organization Identity Card */}
+            <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionIconBadge}>
               <Ionicons name="business" size={17} color="#2563EB" />
@@ -426,6 +486,8 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
             <Text style={styles.signOutBtnText}>Sign Out of Workspace</Text>
           </TouchableOpacity>
         </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -802,5 +864,51 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#DC2626',
+  },
+  topTabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 4,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  topTabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  topTabBtnActive: {
+    backgroundColor: '#FFFFFF',
+    ...SHADOWS.sm,
+  },
+  topTabText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  topTabTextActive: {
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  topTabBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  topTabBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#2563EB',
   },
 });

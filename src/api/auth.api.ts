@@ -1,5 +1,11 @@
 import { apiClient } from './client';
-import { AuthResponse, LoginCredentials, UserSummary } from '../types/auth.types';
+import {
+  AuthResponse,
+  LoginCredentials,
+  UserSummary,
+  OrganizationMember,
+  OrganizationRole,
+} from '../types/auth.types';
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
@@ -62,6 +68,52 @@ export const authApi = {
     newPassword: string;
   }): Promise<{ message: string }> => {
     const { data } = await apiClient.post<{ message: string }>('/auth/reset-password', payload);
+    return data;
+  },
+
+  getOrganizationMembers: async (): Promise<OrganizationMember[]> => {
+    const { data } = await apiClient.get<OrganizationMember[]>('/auth/organization/members');
+    return data;
+  },
+
+  getOrganizationRoles: async (): Promise<OrganizationRole[]> => {
+    const { data } = await apiClient.get<OrganizationRole[]>('/auth/organization/roles');
+    return data;
+  },
+
+  addOrganizationMember: async (payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    roleId: string;
+    password?: string;
+    phone?: string;
+  }): Promise<OrganizationMember> => {
+    const { data } = await apiClient.post<OrganizationMember>('/auth/organization/members', payload);
+    return data;
+  },
+
+  updateOrganizationMember: async (
+    id: string,
+    payload: {
+      roleId?: string;
+      isActive?: boolean;
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+    },
+  ): Promise<OrganizationMember> => {
+    const { data } = await apiClient.patch<OrganizationMember>(
+      `/auth/organization/members/${id}`,
+      payload,
+    );
+    return data;
+  },
+
+  removeOrganizationMember: async (id: string): Promise<{ message: string }> => {
+    const { data } = await apiClient.delete<{ message: string }>(
+      `/auth/organization/members/${id}`,
+    );
     return data;
   },
 };
