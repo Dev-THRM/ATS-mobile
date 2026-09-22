@@ -9,8 +9,10 @@
     "splash": {
       "backgroundColor": "#4F46E5"
     },
+    "scheme": "atsrecruiter",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ats.recruiter"
     },
     "android": {
       "package": "com.ats.recruiter",
@@ -22,6 +24,10 @@
       },
       "predictiveBackGestureEnabled": false
     },
+    "plugins": [
+      "expo-secure-store",
+      "expo-document-picker"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     }
