@@ -6,6 +6,8 @@ import { Platform } from 'react-native';
 const ACCESS_TOKEN_KEY = 'ats_access_token';
 const REFRESH_TOKEN_KEY = 'ats_refresh_token';
 
+export const CLOUDFLARE_TUNNEL_URL = 'https://plant-discrimination-which-briefing.trycloudflare.com';
+
 // Automatically resolve backend host based on platform and Expo environment
 const getBaseUrl = (): string => {
   if (process.env.EXPO_PUBLIC_API_URL) {
@@ -20,30 +22,40 @@ const getBaseUrl = (): string => {
 
   if (hostUri) {
     const ip = hostUri.split(':')[0];
+    if (ip && ip.includes('exp.direct')) {
+      return `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+    }
     if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
       return `http://${ip}:3000/api/v1`;
     }
   }
 
-  if (Platform.OS === 'android') {
-    // 10.0.2.2 is Android Emulator alias for Host loopback (localhost)
-    return 'http://10.0.2.2:3000/api/v1';
-  }
-  return 'http://localhost:3000/api/v1';
+  // Fallback to active cloudflare tunnel URL
+  return `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
 };
 
 export const API_BASE_URL = getBaseUrl();
 
+export const setApiBaseUrl = (newUrl: string) => {
+  const formatted = newUrl.endsWith('/api/v1') ? newUrl : `${newUrl.replace(/\/+$/, '')}/api/v1`;
+  apiClient.defaults.baseURL = formatted;
+};
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 8000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+let inMemoryAccessToken: string | null = null;
+let inMemoryRefreshToken: string | null = null;
+
 // Storage helper utilities for tokens (with Web localStorage fallback)
 export const storeTokens = async (accessToken: string, refreshToken: string): Promise<void> => {
+  inMemoryAccessToken = accessToken;
+  inMemoryRefreshToken = refreshToken;
   try {
     if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
@@ -52,7 +64,7 @@ export const storeTokens = async (accessToken: string, refreshToken: string): Pr
     }
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
     await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
-  } catch {
+  } catch (err) {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
       localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
@@ -61,11 +73,16 @@ export const storeTokens = async (accessToken: string, refreshToken: string): Pr
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
+  if (inMemoryAccessToken) return inMemoryAccessToken;
   try {
     if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-      return localStorage.getItem(ACCESS_TOKEN_KEY);
+      const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+      if (token) inMemoryAccessToken = token;
+      return token;
     }
-    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+    if (token) inMemoryAccessToken = token;
+    return token;
   } catch {
     if (typeof localStorage !== 'undefined') {
       return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -75,11 +92,16 @@ export const getAccessToken = async (): Promise<string | null> => {
 };
 
 export const getRefreshToken = async (): Promise<string | null> => {
+  if (inMemoryRefreshToken) return inMemoryRefreshToken;
   try {
     if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-      return localStorage.getItem(REFRESH_TOKEN_KEY);
+      const token = localStorage.getItem(REFRESH_TOKEN_KEY);
+      if (token) inMemoryRefreshToken = token;
+      return token;
     }
-    return await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    const token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+    if (token) inMemoryRefreshToken = token;
+    return token;
   } catch {
     if (typeof localStorage !== 'undefined') {
       return localStorage.getItem(REFRESH_TOKEN_KEY);
@@ -89,6 +111,8 @@ export const getRefreshToken = async (): Promise<string | null> => {
 };
 
 export const clearTokens = async (): Promise<void> => {
+  inMemoryAccessToken = null;
+  inMemoryRefreshToken = null;
   try {
     if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
@@ -140,6 +164,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // Do NOT intercept or refresh on auth login or refresh requests
+    if (originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {

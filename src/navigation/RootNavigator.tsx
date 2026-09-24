@@ -8,9 +8,9 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { View, StyleSheet } from 'react-native';
 
 export const RootNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isBootstrapping } = useAuth();
 
-  if (isLoading) {
+  if (isBootstrapping) {
     return (
       <View style={styles.loadingContainer}>
         <StatusBar style="dark" />

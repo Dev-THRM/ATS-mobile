@@ -21,7 +21,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const { user } = useAuth();
+  const { user, switchWorkspace } = useAuth();
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['ats-dashboard'],
@@ -74,6 +74,35 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[COLORS.primary]} />
         }
       >
+        {/* Workspace Switcher Banner if not viewing THRM Digital Marketing Agency */}
+        {user?.organization?.slug !== 'thrm-digital-marketing-agency' ? (
+          <TouchableOpacity
+            style={styles.switchOrgBanner}
+            onPress={() => switchWorkspace('thrm-digital-marketing-agency')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.switchOrgIconBox}>
+              <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.switchOrgTitle}>Switch to Live Web Workspace</Text>
+              <Text style={styles.switchOrgSub}>
+                Viewing "{user?.organization?.name || 'THRM Core'}". Tap here to load your live THRM Digital Marketing Agency (6 jobs, 10 candidates).
+              </Text>
+            </View>
+            <View style={styles.switchOrgActionPill}>
+              <Text style={styles.switchOrgActionText}>Switch Now →</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.activeOrgIndicator}>
+            <Ionicons name="checkmark-circle" size={15} color="#059669" />
+            <Text style={styles.activeOrgText}>
+              Viewing Live Web Workspace: <Text style={{ fontWeight: '700' }}>THRM Digital Marketing Agency</Text>
+            </Text>
+          </View>
+        )}
+
         {/* Soft Light Blue & White Welcome Card */}
         <View style={styles.lightWelcomeCard}>
           <View style={styles.welcomeTopRow}>
@@ -645,5 +674,67 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 11,
     color: COLORS.textMuted,
+  },
+  switchOrgBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1.5,
+    borderColor: '#3B82F6',
+    borderRadius: RADIUS.md,
+    padding: 12,
+    marginBottom: 14,
+    ...SHADOWS.sm,
+  },
+  switchOrgIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.sm,
+    backgroundColor: '#2563EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchOrgTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E3A8A',
+  },
+  switchOrgSub: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#3B82F6',
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  switchOrgActionPill: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.sm,
+    marginLeft: 6,
+  },
+  switchOrgActionText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  activeOrgIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 12,
+    gap: 6,
+  },
+  activeOrgText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#065F46',
   },
 });

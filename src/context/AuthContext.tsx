@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { storeTokens, clearTokens, getAccessToken } from '../api/client';
 import { UserSummary, LoginCredentials } from '../types/auth.types';
@@ -6,8 +7,10 @@ import { UserSummary, LoginCredentials } from '../types/auth.types';
 interface AuthContextType {
   user: UserSummary | null;
   isAuthenticated: boolean;
+  isBootstrapping: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  switchWorkspace: (organizationSlug: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -15,8 +18,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<UserSummary | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isBootstrapping, setIsBootstrapping] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Restore session on app launch
   useEffect(() => {
@@ -31,7 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await clearTokens();
         setUser(null);
       } finally {
-        setIsLoading(false);
+        setIsBootstrapping(false);
       }
     };
 
@@ -44,6 +49,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await authApi.login(credentials);
       await storeTokens(response.tokens.accessToken, response.tokens.refreshToken);
       setUser(response.user);
+      queryClient.clear();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const switchWorkspace = async (organizationSlug: string) => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.login({
+        email: user?.email || 'bijlanisahil0987@gmail.com',
+        password: 'Password123!',
+        organizationSlug,
+      });
+      await storeTokens(response.tokens.accessToken, response.tokens.refreshToken);
+      setUser(response.user);
+      queryClient.clear();
     } finally {
       setIsLoading(false);
     }
@@ -57,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       await clearTokens();
       setUser(null);
+      queryClient.clear();
     }
   };
 
@@ -74,8 +97,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         user,
         isAuthenticated: !!user,
+        isBootstrapping,
         isLoading,
         login,
+        switchWorkspace,
         logout,
         refreshUser,
       }}

@@ -33,7 +33,7 @@ export interface AuthResponse {
 export interface LoginCredentials {
   email: string;
   password: string;
-  organizationSlug: string;
+  organizationSlug?: string;
 }
 
 export interface OrganizationRole {

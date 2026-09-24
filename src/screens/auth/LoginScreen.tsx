@@ -17,14 +17,20 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../api/auth.api';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
+import { API_BASE_URL, CLOUDFLARE_TUNNEL_URL, setApiBaseUrl } from '../../api/client';
+import axios from 'axios';
+
 export const LoginScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { login, isLoading } = useAuth();
-  const [orgSlug, setOrgSlug] = useState('acme-corp');
-  const [email, setEmail] = useState('admin@acme.com');
-  const [password, setPassword] = useState('password123');
+  const [orgSlug, setOrgSlug] = useState('thrm-digital-marketing-agency');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentServerUrl, setCurrentServerUrl] = useState<string>(API_BASE_URL);
+  const [serverStatus, setServerStatus] = useState<'connected' | 'checking' | 'failed'>('connected');
+  const [workspacesList, setWorkspacesList] = useState<Array<{ id: string; name: string; slug: string }>>([]);
 
   // Forgot password modal state
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
@@ -56,36 +62,113 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleLogin = async () => {
-    if (!orgSlug.trim()) {
-      setError('Please enter your Organization Slug (e.g. acme-corp)');
-      return;
-    }
+  const handleLogin = async (overrideSlug?: string) => {
     if (!email.trim() || !password) {
       setError('Please provide your work email and password');
       return;
     }
 
+    const slugToUse = overrideSlug !== undefined ? overrideSlug : orgSlug.trim().toLowerCase();
+
     setError(null);
     try {
       await login({
-        organizationSlug: orgSlug.trim().toLowerCase(),
-        email: email.trim(),
+        organizationSlug: slugToUse || undefined,
+        email: email.trim().toLowerCase(),
         password,
       });
+      setWorkspacesList([]);
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        'Authentication failed. Please verify credentials.';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+      // If local connection timed out or network error, automatically switch to Cloudflare tunnel and retry!
+      const isNetworkIssue =
+        err.code === 'ECONNABORTED' ||
+        err.message?.includes('timeout') ||
+        err.message?.includes('Network Error');
+
+      if (isNetworkIssue && !currentServerUrl.includes('trycloudflare.com')) {
+        try {
+          const tunnelApi = `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+          setApiBaseUrl(tunnelApi);
+          setCurrentServerUrl(tunnelApi);
+          await login({
+            organizationSlug: slugToUse || undefined,
+            email: email.trim().toLowerCase(),
+            password,
+          });
+          setWorkspacesList([]);
+          return;
+        } catch (retryErr: any) {
+          err = retryErr;
+        }
+      }
+
+      const respData = err.response?.data;
+      if (respData?.organizations && Array.isArray(respData.organizations)) {
+        setWorkspacesList(respData.organizations);
+        setError('Multiple workspaces found for your email. Please select your workspace below:');
+      } else {
+        const msg =
+          respData?.message ||
+          (err.message?.includes('Network Error') || err.message?.includes('timeout')
+            ? `Connection to server timed out. Tap "Switch to Cloudflare Tunnel" below.`
+            : err.message) ||
+          'Authentication failed. Please verify credentials.';
+        setError(Array.isArray(msg) ? msg.join(', ') : msg);
+      }
     }
   };
 
-  const handleFillDemo = () => {
-    setOrgSlug('acme-corp');
-    setEmail('admin@acme.com');
-    setPassword('password123');
+  const handleFillThrmAgencyDemo = () => {
+    setOrgSlug('thrm-digital-marketing-agency');
+    setEmail('bijlanisahil0987@gmail.com');
+    setPassword('Password123!');
+    setError(null);
+  };
+
+  const handleFillThrmCoreDemo = () => {
+    setOrgSlug('thrm');
+    setEmail('bijlanisahil0987@gmail.com');
+    setPassword('Password123!');
+    setError(null);
+  };
+
+  const handleFillAcmeDemo = () => {
+    setOrgSlug('acme-tech');
+    setEmail('alex@acme.com');
+    setPassword('Password123!');
+    setError(null);
+  };
+
+  const handleTestConnection = async () => {
+    setServerStatus('checking');
+    try {
+      await axios.get(`${currentServerUrl}/health/liveness`, { timeout: 3500 });
+      setServerStatus('connected');
+    } catch {
+      // Auto-fallback to Cloudflare tunnel if local IP times out or fails
+      try {
+        const tunnelApi = `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+        await axios.get(`${tunnelApi}/health/liveness`, { timeout: 3500 });
+        setApiBaseUrl(tunnelApi);
+        setCurrentServerUrl(tunnelApi);
+        setServerStatus('connected');
+      } catch {
+        setServerStatus('failed');
+      }
+    }
+  };
+
+  const handleToggleServer = () => {
+    if (currentServerUrl.includes('trycloudflare.com')) {
+      const localApi = 'http://192.168.1.35:3000/api/v1';
+      setApiBaseUrl(localApi);
+      setCurrentServerUrl(localApi);
+    } else {
+      const tunnelApi = `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+      setApiBaseUrl(tunnelApi);
+      setCurrentServerUrl(tunnelApi);
+    }
+    setServerStatus('connected');
     setError(null);
   };
 
@@ -128,14 +211,42 @@ export const LoginScreen: React.FC = () => {
               </View>
             ) : null}
 
-            {/* Org Slug */}
+            {/* Workspace Selector when multiple workspaces exist for this email */}
+            {workspacesList.length > 0 && (
+              <View style={styles.workspacePickerContainer}>
+                <Text style={styles.workspacePickerTitle}>Select Workspace to Sign In:</Text>
+                {workspacesList.map((ws) => (
+                  <TouchableOpacity
+                    key={ws.slug}
+                    style={[
+                      styles.workspaceItem,
+                      orgSlug === ws.slug && styles.workspaceItemSelected,
+                    ]}
+                    onPress={() => {
+                      setOrgSlug(ws.slug);
+                      handleLogin(ws.slug);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="business" size={16} color={COLORS.primary} />
+                    <View style={{ flex: 1, marginLeft: 8 }}>
+                      <Text style={styles.workspaceItemName}>{ws.name}</Text>
+                      <Text style={styles.workspaceItemSlug}>slug: {ws.slug}</Text>
+                    </View>
+                    <Ionicons name="arrow-forward-circle" size={20} color={COLORS.primary} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Org Slug (Optional) */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Organization Slug</Text>
+              <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="e.g. acme-corp"
+                  placeholder="e.g. thrm-digital-marketing-agency"
                   placeholderTextColor={COLORS.textLight}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -208,7 +319,7 @@ export const LoginScreen: React.FC = () => {
             {/* Login Button */}
             <TouchableOpacity
               style={[styles.loginButton, isLoading && styles.disabledButton]}
-              onPress={handleLogin}
+              onPress={() => handleLogin()}
               disabled={isLoading}
               activeOpacity={0.8}
             >
@@ -222,11 +333,63 @@ export const LoginScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            {/* Demo Quick Button */}
-            <TouchableOpacity onPress={handleFillDemo} style={styles.demoButton} activeOpacity={0.7}>
-              <Ionicons name="flash-outline" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
-              <Text style={styles.demoButtonText}>Auto-Fill Demo Credentials (Acme Corp)</Text>
-            </TouchableOpacity>
+            {/* Demo Quick Buttons */}
+            <View style={{ marginTop: 14, gap: 8 }}>
+              <TouchableOpacity onPress={handleFillThrmAgencyDemo} style={styles.demoButton} activeOpacity={0.7}>
+                <Ionicons name="sparkles" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
+                <Text style={styles.demoButtonText}>Auto-Fill THRM Agency (Live Web Data)</Text>
+              </TouchableOpacity>
+
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <TouchableOpacity onPress={handleFillThrmCoreDemo} style={[styles.demoButton, { flex: 1, backgroundColor: COLORS.surfaceSecondary, borderWidth: 1, borderColor: COLORS.borderLight, marginTop: 0 }]} activeOpacity={0.7}>
+                  <Ionicons name="business-outline" size={12} color={COLORS.textSecondary} style={{ marginRight: 3 }} />
+                  <Text style={[styles.demoButtonText, { color: COLORS.textSecondary, fontSize: 11 }]}>THRM Core</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={handleFillAcmeDemo} style={[styles.demoButton, { flex: 1, backgroundColor: COLORS.surfaceSecondary, borderWidth: 1, borderColor: COLORS.borderLight, marginTop: 0 }]} activeOpacity={0.7}>
+                  <Ionicons name="briefcase-outline" size={12} color={COLORS.textSecondary} style={{ marginRight: 3 }} />
+                  <Text style={[styles.demoButtonText, { color: COLORS.textSecondary, fontSize: 11 }]}>Acme Tech</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Server Status Indicator (Tap to Ping / Toggle) */}
+            <View style={{ marginTop: 16, alignItems: 'center' }}>
+              <TouchableOpacity onPress={handleTestConnection} style={styles.serverInfoRow} activeOpacity={0.7}>
+                <View
+                  style={[
+                    styles.serverDot,
+                    {
+                      backgroundColor:
+                        serverStatus === 'connected'
+                          ? '#10B981'
+                          : serverStatus === 'checking'
+                          ? '#F59E0B'
+                          : '#EF4444',
+                    },
+                  ]}
+                />
+                <Text style={styles.serverInfoText} numberOfLines={1}>
+                  {serverStatus === 'checking'
+                    ? 'Testing connection...'
+                    : serverStatus === 'failed'
+                    ? `Offline (${currentServerUrl.includes('trycloudflare.com') ? 'Cloudflare Tunnel' : 'LAN'}) - Tap to ping`
+                    : `Connected: ${currentServerUrl.includes('trycloudflare.com') ? 'Cloudflare Tunnel' : 'LAN Wi-Fi'}`}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleToggleServer}
+                style={{ marginTop: 6, paddingVertical: 4, paddingHorizontal: 8 }}
+                activeOpacity={0.6}
+              >
+                <Text style={{ fontFamily: FONTS.family, fontSize: 11, color: COLORS.primary, textDecorationLine: 'underline' }}>
+                  {currentServerUrl.includes('trycloudflare.com')
+                    ? 'Switch to Local Wi-Fi (LAN)'
+                    : 'Switch to Cloudflare Global Tunnel'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -551,5 +714,63 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
     lineHeight: 17,
+  },
+  workspacePickerContainer: {
+    backgroundColor: COLORS.surfaceSecondary,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primaryLight,
+    padding: 12,
+    marginBottom: 16,
+  },
+  workspacePickerTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  workspaceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    padding: 10,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    marginBottom: 6,
+  },
+  workspaceItemSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryLight,
+  },
+  workspaceItemName: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  workspaceItemSlug: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.primary,
+  },
+  serverInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+    gap: 6,
+  },
+  serverDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
+  },
+  serverInfoText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textMuted,
   },
 });
