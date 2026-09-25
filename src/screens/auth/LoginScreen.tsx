@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../api/auth.api';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
-import { API_BASE_URL, CLOUDFLARE_TUNNEL_URL, setApiBaseUrl } from '../../api/client';
+import { API_BASE_URL, CLOUDFLARE_TUNNEL_URL, LOCAL_LAN_URL, setApiBaseUrl } from '../../api/client';
 import axios from 'axios';
 
 export const LoginScreen: React.FC = () => {
@@ -39,6 +39,10 @@ export const LoginScreen: React.FC = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
   const [forgotError, setForgotError] = useState<string | null>(null);
+
+  useEffect(() => {
+    handleTestConnection();
+  }, []);
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) {
@@ -79,17 +83,19 @@ export const LoginScreen: React.FC = () => {
       });
       setWorkspacesList([]);
     } catch (err: any) {
-      // If local connection timed out or network error, automatically switch to Cloudflare tunnel and retry!
+      // If local connection timed out or network error, automatically switch to alternate server and retry!
       const isNetworkIssue =
         err.code === 'ECONNABORTED' ||
         err.message?.includes('timeout') ||
         err.message?.includes('Network Error');
 
-      if (isNetworkIssue && !currentServerUrl.includes('trycloudflare.com')) {
+      if (isNetworkIssue) {
+        const alternateUrl = currentServerUrl.includes('trycloudflare.com')
+          ? LOCAL_LAN_URL
+          : `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
         try {
-          const tunnelApi = `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
-          setApiBaseUrl(tunnelApi);
-          setCurrentServerUrl(tunnelApi);
+          setApiBaseUrl(alternateUrl);
+          setCurrentServerUrl(alternateUrl);
           await login({
             organizationSlug: slugToUse || undefined,
             email: email.trim().toLowerCase(),
@@ -110,33 +116,12 @@ export const LoginScreen: React.FC = () => {
         const msg =
           respData?.message ||
           (err.message?.includes('Network Error') || err.message?.includes('timeout')
-            ? `Connection to server timed out. Tap "Switch to Cloudflare Tunnel" below.`
+            ? `Connection timed out. Switched to backup server, please tap Sign In again.`
             : err.message) ||
           'Authentication failed. Please verify credentials.';
         setError(Array.isArray(msg) ? msg.join(', ') : msg);
       }
     }
-  };
-
-  const handleFillThrmAgencyDemo = () => {
-    setOrgSlug('thrm-digital-marketing-agency');
-    setEmail('bijlanisahil0987@gmail.com');
-    setPassword('Password123!');
-    setError(null);
-  };
-
-  const handleFillThrmCoreDemo = () => {
-    setOrgSlug('thrm');
-    setEmail('bijlanisahil0987@gmail.com');
-    setPassword('Password123!');
-    setError(null);
-  };
-
-  const handleFillAcmeDemo = () => {
-    setOrgSlug('acme-tech');
-    setEmail('alex@acme.com');
-    setPassword('Password123!');
-    setError(null);
   };
 
   const handleTestConnection = async () => {
@@ -145,12 +130,14 @@ export const LoginScreen: React.FC = () => {
       await axios.get(`${currentServerUrl}/health/liveness`, { timeout: 3500 });
       setServerStatus('connected');
     } catch {
-      // Auto-fallback to Cloudflare tunnel if local IP times out or fails
+      // Auto-fallback to alternate tunnel / LAN if current URL times out
       try {
-        const tunnelApi = `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
-        await axios.get(`${tunnelApi}/health/liveness`, { timeout: 3500 });
-        setApiBaseUrl(tunnelApi);
-        setCurrentServerUrl(tunnelApi);
+        const alternateUrl = currentServerUrl.includes('trycloudflare.com')
+          ? LOCAL_LAN_URL
+          : `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+        await axios.get(`${alternateUrl}/health/liveness`, { timeout: 3500 });
+        setApiBaseUrl(alternateUrl);
+        setCurrentServerUrl(alternateUrl);
         setServerStatus('connected');
       } catch {
         setServerStatus('failed');
@@ -158,17 +145,19 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleToggleServer = () => {
-    if (currentServerUrl.includes('trycloudflare.com')) {
-      const localApi = 'http://192.168.1.35:3000/api/v1';
-      setApiBaseUrl(localApi);
-      setCurrentServerUrl(localApi);
-    } else {
-      const tunnelApi = `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
-      setApiBaseUrl(tunnelApi);
-      setCurrentServerUrl(tunnelApi);
+  const handleToggleServer = async () => {
+    const nextUrl = currentServerUrl.includes('trycloudflare.com')
+      ? LOCAL_LAN_URL
+      : `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+    setApiBaseUrl(nextUrl);
+    setCurrentServerUrl(nextUrl);
+    setServerStatus('checking');
+    try {
+      await axios.get(`${nextUrl}/health/liveness`, { timeout: 3500 });
+      setServerStatus('connected');
+    } catch {
+      setServerStatus('failed');
     }
-    setServerStatus('connected');
     setError(null);
   };
 
@@ -333,26 +322,6 @@ export const LoginScreen: React.FC = () => {
               )}
             </TouchableOpacity>
 
-            {/* Demo Quick Buttons */}
-            <View style={{ marginTop: 14, gap: 8 }}>
-              <TouchableOpacity onPress={handleFillThrmAgencyDemo} style={styles.demoButton} activeOpacity={0.7}>
-                <Ionicons name="sparkles" size={13} color={COLORS.primary} style={{ marginRight: 4 }} />
-                <Text style={styles.demoButtonText}>Auto-Fill THRM Agency (Live Web Data)</Text>
-              </TouchableOpacity>
-
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                <TouchableOpacity onPress={handleFillThrmCoreDemo} style={[styles.demoButton, { flex: 1, backgroundColor: COLORS.surfaceSecondary, borderWidth: 1, borderColor: COLORS.borderLight, marginTop: 0 }]} activeOpacity={0.7}>
-                  <Ionicons name="business-outline" size={12} color={COLORS.textSecondary} style={{ marginRight: 3 }} />
-                  <Text style={[styles.demoButtonText, { color: COLORS.textSecondary, fontSize: 11 }]}>THRM Core</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleFillAcmeDemo} style={[styles.demoButton, { flex: 1, backgroundColor: COLORS.surfaceSecondary, borderWidth: 1, borderColor: COLORS.borderLight, marginTop: 0 }]} activeOpacity={0.7}>
-                  <Ionicons name="briefcase-outline" size={12} color={COLORS.textSecondary} style={{ marginRight: 3 }} />
-                  <Text style={[styles.demoButtonText, { color: COLORS.textSecondary, fontSize: 11 }]}>Acme Tech</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
             {/* Server Status Indicator (Tap to Ping / Toggle) */}
             <View style={{ marginTop: 16, alignItems: 'center' }}>
               <TouchableOpacity onPress={handleTestConnection} style={styles.serverInfoRow} activeOpacity={0.7}>
@@ -400,8 +369,17 @@ export const LoginScreen: React.FC = () => {
           animationType="fade"
           onRequestClose={() => setIsForgotModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View style={styles.modalOverlay}>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFill}
+                activeOpacity={1}
+                onPress={() => setIsForgotModalVisible(false)}
+              />
+              <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <View style={styles.modalHeaderIcon}>
                   <Ionicons name="key-outline" size={20} color={COLORS.primary} />
@@ -488,7 +466,8 @@ export const LoginScreen: React.FC = () => {
               )}
             </View>
           </View>
-        </Modal>
+        </KeyboardAvoidingView>
+      </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -660,6 +639,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 400,
+    maxHeight: '85%',
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     padding: 22,

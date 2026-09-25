@@ -36,6 +36,7 @@
     "start:lan": "expo start --host lan",
     "start:tunnel": "expo start --tunnel",
     "start:localhost": "expo start --localhost",
+    "tunnel:backend": "..\\cloudflared.exe tunnel --url http://127.0.0.1:3000",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"

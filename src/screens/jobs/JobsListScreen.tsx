@@ -11,6 +11,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -309,19 +311,28 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         transparent
         onRequestClose={() => setCreateModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>Post New Position</Text>
-                <Text style={styles.modalSub}>Launch a requisition across your organization</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setCreateModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Post New Position</Text>
+                  <Text style={styles.modalSub}>Launch a requisition across your organization</Text>
+                </View>
+                <TouchableOpacity onPress={() => setCreateModalVisible(false)} style={styles.closeBtn}>
+                  <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => setCreateModalVisible(false)} style={styles.closeBtn}>
-                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </View>
 
-            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
+              <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Job Title *</Text>
                 <TextInput
@@ -438,7 +449,8 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             </View>
           </View>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
+    </Modal>
     </View>
   );
 };
@@ -645,7 +657,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
-    maxHeight: '90%',
+    maxHeight: '85%',
     paddingBottom: 20,
   },
   modalHeader: {

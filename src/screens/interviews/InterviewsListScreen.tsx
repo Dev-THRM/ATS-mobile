@@ -12,6 +12,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -380,19 +382,28 @@ export const InterviewsListScreen: React.FC = () => {
         transparent
         onRequestClose={() => setScheduleModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>Schedule Interview</Text>
-                <Text style={styles.modalSub}>Set up an evaluation round</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setScheduleModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Schedule Interview</Text>
+                  <Text style={styles.modalSub}>Set up an evaluation round</Text>
+                </View>
+                <TouchableOpacity onPress={() => setScheduleModalVisible(false)}>
+                  <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => setScheduleModalVisible(false)}>
-                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </View>
 
-            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
+              <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Candidate Application *</Text>
                 {applicationsList.length === 0 ? (
@@ -491,7 +502,8 @@ export const InterviewsListScreen: React.FC = () => {
             </View>
           </View>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
+    </Modal>
     </View>
   );
 };
@@ -714,7 +726,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
-    maxHeight: '90%',
+    maxHeight: '85%',
     paddingBottom: 20,
   },
   modalHeader: {

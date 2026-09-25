@@ -17,7 +17,7 @@ import { StageBadge } from '../../components/StageBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Application, Candidate } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
-import { API_BASE_URL } from '../../api/client';
+import { getServerRoot } from '../../api/client';
 
 const formatCandidateName = (first?: string, last?: string) => {
   let full = `${first || ''} ${last || ''}`.trim();
@@ -56,7 +56,7 @@ const getResumeUri = (url?: string) => {
   }
 
   if (url.startsWith('http')) return url;
-  const serverRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const serverRoot = getServerRoot();
   return `${serverRoot}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,11 @@ import {
   RefreshControl,
   Switch,
   Platform,
+  KeyboardAvoidingView,
+  PanResponder,
+  Animated,
+  Dimensions,
+  Vibration,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +30,152 @@ import { EmptyState } from '../../components/EmptyState';
 import { Application, Candidate, PipelineStage } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const COLUMN_WIDTH = Math.min(320, SCREEN_WIDTH * 0.82);
+const COLUMN_MARGIN = 14;
+const BOARD_PADDING = 16;
+
+const getStageThemeColor = (stage: PipelineStage): string => {
+  const name = stage.name?.toLowerCase() || '';
+  const type = stage.stageType?.toLowerCase() || '';
+  if (stage.isHired || name.includes('hire') || type === 'hired') return '#10B981';
+  if (stage.isRejected || name.includes('reject') || type === 'rejected') return '#EF4444';
+  if (name.includes('offer') || type === 'offer') return '#8B5CF6';
+  if (name.includes('interview') || type.includes('interview') || type === 'technical') return '#F59E0B';
+  if (name.includes('screen') || type === 'screening') return '#06B6D4';
+  return '#2563EB';
+};
+
+interface KanbanCardProps {
+  application: Application;
+  isDragging: boolean;
+  onDragStart: (pageX: number, pageY: number) => void;
+  onDragMove: (moveX: number, moveY: number) => void;
+  onDragEnd: (releaseX: number, releaseY: number) => void;
+  onOpenDetails: () => void;
+  onMoveStage: () => void;
+  onRemove: () => void;
+  onCall?: () => void;
+  onEmail?: () => void;
+}
+
+const KanbanCard: React.FC<KanbanCardProps> = ({
+  application,
+  isDragging,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+  onOpenDetails,
+  onMoveStage,
+  onRemove,
+  onCall,
+  onEmail,
+}) => {
+  const candidateName =
+    `${application.candidate?.firstName || ''} ${application.candidate?.lastName || ''}`.trim() ||
+    'Candidate';
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, gestureState) => {
+          return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
+        },
+        onPanResponderGrant: (e) => {
+          Vibration.vibrate(25);
+          onDragStart(e.nativeEvent.pageX, e.nativeEvent.pageY);
+        },
+        onPanResponderMove: (_, gestureState) => {
+          onDragMove(gestureState.moveX, gestureState.moveY);
+        },
+        onPanResponderRelease: () => {
+          onDragEnd(0, 0);
+        },
+        onPanResponderTerminate: () => {
+          onDragEnd(0, 0);
+        },
+      }),
+    [application.id, onDragStart, onDragMove, onDragEnd],
+  );
+
+  return (
+    <View style={[styles.kanbanCard, isDragging && styles.kanbanCardGhost]}>
+      <View style={styles.kanbanCardTop}>
+        <TouchableOpacity style={styles.kanbanCardCandidateInfo} onPress={onOpenDetails}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {application.candidate?.firstName?.[0] || 'C'}
+              {application.candidate?.lastName?.[0] || ''}
+            </Text>
+          </View>
+          <View style={{ flex: 1, marginLeft: 8 }}>
+            <Text style={styles.nameText} numberOfLines={1}>
+              {candidateName}
+            </Text>
+            <Text style={styles.subText} numberOfLines={1}>
+              {application.candidate?.currentTitle || 'Applicant'}{' '}
+              {application.candidate?.currentCompany ? `@ ${application.candidate.currentCompany}` : ''}
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Drag Handle with Grip Icon */}
+        <View {...panResponder.panHandlers} style={styles.dragGripHandle}>
+          <Ionicons name="reorder-two" size={24} color={COLORS.textSecondary} />
+        </View>
+      </View>
+
+      <View style={styles.kanbanCardMetaRow}>
+        {application.atsScore !== undefined ? (
+          <ScorePill score={application.atsScore} />
+        ) : (
+          <View style={styles.unscoredPill}>
+            <Text style={styles.unscoredPillText}>Evaluating</Text>
+          </View>
+        )}
+
+        <Text style={styles.appliedDateText}>
+          {application.appliedAt && !isNaN(new Date(application.appliedAt).getTime())
+            ? new Date(application.appliedAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })
+            : 'Recent'}
+        </Text>
+      </View>
+
+      <View style={styles.kanbanCardFooter}>
+        <View style={styles.contactIconsGroup}>
+          {application.candidate?.phone ? (
+            <TouchableOpacity style={styles.circleActionBtn} onPress={onCall}>
+              <Ionicons name="call-outline" size={13} color={COLORS.primary} />
+            </TouchableOpacity>
+          ) : null}
+
+          {application.candidate?.email ? (
+            <TouchableOpacity style={[styles.circleActionBtn, { marginLeft: 6 }]} onPress={onEmail}>
+              <Ionicons name="mail-outline" size={13} color={COLORS.primary} />
+            </TouchableOpacity>
+          ) : null}
+
+          <TouchableOpacity
+            style={[styles.circleActionBtn, styles.deleteActionBtn, { marginLeft: 6 }]}
+            onPress={onRemove}
+          >
+            <Ionicons name="trash-outline" size={13} color={COLORS.error} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity style={styles.advanceButton} onPress={onMoveStage} activeOpacity={0.8}>
+          <Text style={styles.advanceButtonText}>Move</Text>
+          <Ionicons name="arrow-forward" size={11} color="#FFFFFF" style={{ marginLeft: 2 }} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   route,
   navigation,
@@ -35,7 +186,87 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
 
   const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 14) + 6;
 
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+  const [draggingApp, setDraggingApp] = useState<Application | null>(null);
+  const [hoveredStageId, setHoveredStageId] = useState<string | null>(null);
+  const dragPan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const boardScrollRef = useRef<ScrollView>(null);
+  const boardScrollX = useRef(0);
+  const bottomTrayScrollX = useRef(0);
+
+  const handleDragStart = (app: Application, x: number, y: number) => {
+    setDraggingApp(app);
+    setHoveredStageId(null);
+    dragPan.setValue({ x, y });
+  };
+
+  const handleDragMove = (moveX: number, moveY: number) => {
+    dragPan.setValue({ x: moveX, y: moveY });
+
+    // Check if hovering over bottom tray
+    if (moveY > SCREEN_HEIGHT - 170) {
+      const chipWidth = 125;
+      const trayOffset = moveX + bottomTrayScrollX.current - 16;
+      const index = Math.floor(trayOffset / chipWidth);
+      if (index >= 0 && index < stages.length) {
+        setHoveredStageId(stages[index].id);
+        return;
+      }
+    }
+
+    // Check horizontal column
+    for (let i = 0; i < stages.length; i++) {
+      const colLeft = BOARD_PADDING + i * (COLUMN_WIDTH + COLUMN_MARGIN) - boardScrollX.current;
+      const colRight = colLeft + COLUMN_WIDTH;
+      if (moveX >= colLeft && moveX <= colRight) {
+        setHoveredStageId(stages[i].id);
+        return;
+      }
+    }
+
+    setHoveredStageId(null);
+  };
+
+  const handleDragEnd = () => {
+    if (draggingApp && hoveredStageId && hoveredStageId !== draggingApp.currentStageId) {
+      Vibration.vibrate(35);
+      handleDirectMove(draggingApp, hoveredStageId);
+    }
+    setDraggingApp(null);
+    setHoveredStageId(null);
+  };
+
+  const handleDirectMove = (app: Application, destStageId: string) => {
+    if (app.currentStageId === destStageId) return;
+
+    const destStage = stages.find((s) => s.id === destStageId);
+    const isDestReject =
+      destStage?.isRejected ||
+      destStage?.name?.toLowerCase().includes('reject') ||
+      destStage?.stageType?.toLowerCase().includes('reject');
+
+    const isDestOffer =
+      destStage?.stageType === 'OFFER' ||
+      destStage?.stageType === 'HIRED' ||
+      destStage?.name?.toLowerCase().includes('offer') ||
+      destStage?.name?.toLowerCase().includes('hire');
+
+    if (isDestReject || isDestOffer) {
+      setSelectedApplication(app);
+      setTargetStageId(destStageId);
+      setTransitionModalVisible(true);
+      return;
+    }
+
+    updateStageMutation.mutate({
+      appId: app.id,
+      payload: {
+        stageId: destStageId,
+        toStageId: destStageId,
+      },
+    });
+  };
 
   // Stage Transition Modal State
   const [transitionModalVisible, setTransitionModalVisible] = useState(false);
@@ -354,7 +585,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
 
   return (
     <View style={styles.container}>
-      {/* Top Header with Add Candidate Action */}
+      {/* Top Header with Add Candidate Action & View Mode Switch */}
       <View style={[styles.navHeader, { paddingTop: topPadding }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
@@ -364,6 +595,30 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
             {jobTitle || 'Job Pipeline'}
           </Text>
           <Text style={styles.navSub}>Kanban Stages • {applications.length} Candidates</Text>
+        </View>
+
+        {/* View Switcher: Board vs List */}
+        <View style={styles.viewToggleGroup}>
+          <TouchableOpacity
+            style={[styles.viewToggleBtn, viewMode === 'board' && styles.viewToggleBtnActive]}
+            onPress={() => setViewMode('board')}
+          >
+            <Ionicons
+              name="albums-outline"
+              size={15}
+              color={viewMode === 'board' ? COLORS.primary : COLORS.textSecondary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewToggleBtn, viewMode === 'list' && styles.viewToggleBtnActive]}
+            onPress={() => setViewMode('list')}
+          >
+            <Ionicons
+              name="list-outline"
+              size={15}
+              color={viewMode === 'list' ? COLORS.primary : COLORS.textSecondary}
+            />
+          </TouchableOpacity>
         </View>
 
         {/* Add Candidate Button */}
@@ -382,43 +637,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Stage Tab Filters */}
-      <View style={styles.stageTabsContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.stageTabsScroll}
-        >
-          <TouchableOpacity
-            style={[styles.stageTab, selectedStageId === null && styles.stageTabActive]}
-            onPress={() => setSelectedStageId(null)}
-          >
-            <Text
-              style={[styles.stageTabText, selectedStageId === null && styles.stageTabTextActive]}
-            >
-              All ({applications.length})
-            </Text>
-          </TouchableOpacity>
-
-          {stages.map((stage) => {
-            const count = applications.filter((a) => a.currentStageId === stage.id).length;
-            const isSel = selectedStageId === stage.id;
-            return (
-              <TouchableOpacity
-                key={stage.id}
-                style={[styles.stageTab, isSel && styles.stageTabActive]}
-                onPress={() => setSelectedStageId(stage.id)}
-              >
-                <Text style={[styles.stageTabText, isSel && styles.stageTabTextActive]}>
-                  {stage.name} ({count})
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* Candidate Cards in Pipeline */}
+      {/* Main Content Area */}
       {!jobId ? (
         <EmptyState
           iconName="alert-circle-outline"
@@ -443,27 +662,290 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         </View>
       ) : loadingApps && !isRefetching ? (
         <LoadingSpinner message="Loading candidates..." />
+      ) : viewMode === 'board' ? (
+        /* =====================================================================
+         * HORIZONTAL SCROLLABLE KANBAN BOARD WITH DRAGGABLE CANDIDATES
+         * ===================================================================== */
+        <ScrollView
+          ref={boardScrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.boardScrollContainer}
+          scrollEnabled={!draggingApp}
+          onScroll={(e) => {
+            boardScrollX.current = e.nativeEvent.contentOffset.x;
+          }}
+          scrollEventThrottle={16}
+          decelerationRate="fast"
+          snapToInterval={COLUMN_WIDTH + COLUMN_MARGIN}
+          snapToAlignment="start"
+        >
+          {stages.map((stage) => {
+            const stageApps = applications.filter((a) => a.currentStageId === stage.id);
+            const isHovered = hoveredStageId === stage.id;
+            const stageColor = getStageThemeColor(stage);
+
+            return (
+              <View
+                key={stage.id}
+                style={[
+                  styles.kanbanColumn,
+                  isHovered && styles.kanbanColumnHovered,
+                ]}
+              >
+                {/* Column Header */}
+                <View style={styles.columnHeader}>
+                  <View style={styles.columnHeaderTitleRow}>
+                    <View style={[styles.stageColorDot, { backgroundColor: stageColor }]} />
+                    <Text style={styles.columnTitle} numberOfLines={1}>
+                      {stage.name}
+                    </Text>
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countBadgeText}>{stageApps.length}</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.addCardToColumnBtn}
+                    onPress={() => {
+                      setCandidateSearchQuery('');
+                      setSelectedCandidateToAdd(null);
+                      setInitialStageIdForAdd(stage.id);
+                      setAddCandidateModalVisible(true);
+                    }}
+                  >
+                    <Ionicons name="add" size={18} color={COLORS.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                {isHovered && (
+                  <View style={styles.dropZoneBanner}>
+                    <Ionicons name="arrow-down" size={14} color={COLORS.primary} />
+                    <Text style={styles.dropZoneBannerText}>Drop candidate here</Text>
+                  </View>
+                )}
+
+                {/* Column Cards (Vertical Scrollable) */}
+                <ScrollView
+                  style={styles.columnScroll}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.columnScrollContent}
+                  scrollEnabled={!draggingApp}
+                >
+                  {stageApps.length === 0 ? (
+                    <View style={styles.emptyColumnDropArea}>
+                      <Ionicons name="file-tray-outline" size={26} color={COLORS.textLight} />
+                      <Text style={styles.emptyColumnText}>No candidates</Text>
+                      <Text style={styles.emptyColumnSubtext}>Drag candidate here</Text>
+                    </View>
+                  ) : (
+                    stageApps.map((item) => (
+                      <KanbanCard
+                        key={item.id}
+                        application={item}
+                        isDragging={draggingApp?.id === item.id}
+                        onDragStart={(x, y) => handleDragStart(item, x, y)}
+                        onDragMove={handleDragMove}
+                        onDragEnd={handleDragEnd}
+                        onOpenDetails={() =>
+                          navigation.navigate('CandidateDetail', { candidateId: item.candidateId })
+                        }
+                        onMoveStage={() => handleOpenTransitionModal(item)}
+                        onRemove={() => handleRemoveCandidate(item)}
+                        onCall={() => handleCallCandidate(item.candidate?.phone)}
+                        onEmail={() => handleEmailCandidate(item.candidate?.email)}
+                      />
+                    ))
+                  )}
+                </ScrollView>
+              </View>
+            );
+          })}
+        </ScrollView>
       ) : (
-        <FlatList
-          data={filteredApps}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCandidateCard}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              colors={[COLORS.primary]}
-            />
-          }
-          ListEmptyComponent={
-            <EmptyState
-              iconName="git-network-outline"
-              title="No candidates in this stage"
-              description="Candidates will show up when assigned or moved to this stage."
-            />
-          }
-        />
+        /* =====================================================================
+         * LIST VIEW (COMPACT TAB FILTERED LIST)
+         * ===================================================================== */
+        <>
+          {/* Stage Tab Filters */}
+          <View style={styles.stageTabsContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.stageTabsScroll}
+            >
+              <TouchableOpacity
+                style={[styles.stageTab, selectedStageId === null && styles.stageTabActive]}
+                onPress={() => setSelectedStageId(null)}
+              >
+                <Text
+                  style={[styles.stageTabText, selectedStageId === null && styles.stageTabTextActive]}
+                >
+                  All ({applications.length})
+                </Text>
+              </TouchableOpacity>
+
+              {stages.map((stage) => {
+                const count = applications.filter((a) => a.currentStageId === stage.id).length;
+                const isSel = selectedStageId === stage.id;
+                return (
+                  <TouchableOpacity
+                    key={stage.id}
+                    style={[styles.stageTab, isSel && styles.stageTabActive]}
+                    onPress={() => setSelectedStageId(stage.id)}
+                  >
+                    <Text style={[styles.stageTabText, isSel && styles.stageTabTextActive]}>
+                      {stage.name} ({count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          <FlatList
+            data={filteredApps}
+            keyExtractor={(item) => item.id}
+            renderItem={renderCandidateCard}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                colors={[COLORS.primary]}
+              />
+            }
+            ListEmptyComponent={
+              <EmptyState
+                iconName="git-network-outline"
+                title="No candidates in this stage"
+                description="Candidates will show up when assigned or moved to this stage."
+              />
+            }
+          />
+        </>
+      )}
+
+      {/* Floating Dragged Preview Card */}
+      {draggingApp && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.floatingDragCard,
+            {
+              width: COLUMN_WIDTH,
+              transform: [
+                { translateX: Animated.subtract(dragPan.x, COLUMN_WIDTH / 2) },
+                { translateY: Animated.subtract(dragPan.y, 45) },
+                { scale: 1.05 },
+                { rotate: '2.5deg' },
+              ],
+            },
+          ]}
+        >
+          <View style={styles.floatingCardInner}>
+            <View style={styles.floatingCardTop}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {draggingApp.candidate?.firstName?.[0] || 'C'}
+                  {draggingApp.candidate?.lastName?.[0] || ''}
+                </Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.nameText} numberOfLines={1}>
+                  {draggingApp.candidate?.firstName} {draggingApp.candidate?.lastName}
+                </Text>
+                <Text style={styles.subText} numberOfLines={1}>
+                  {draggingApp.candidate?.currentTitle || 'Applicant'}
+                </Text>
+              </View>
+              {draggingApp.atsScore !== undefined && (
+                <ScorePill score={draggingApp.atsScore} />
+              )}
+            </View>
+
+            <View
+              style={[
+                styles.floatingDropHintBadge,
+                hoveredStageId ? styles.floatingDropHintBadgeActive : null,
+              ]}
+            >
+              <Ionicons
+                name={hoveredStageId ? 'checkmark-circle' : 'move'}
+                size={14}
+                color={hoveredStageId ? '#FFFFFF' : COLORS.primary}
+              />
+              <Text
+                style={[
+                  styles.floatingDropHintText,
+                  hoveredStageId ? styles.floatingDropHintTextActive : null,
+                ]}
+              >
+                {hoveredStageId
+                  ? `Release to move to: ${stages.find((s) => s.id === hoveredStageId)?.name || 'Stage'}`
+                  : 'Drag to any stage column or bottom tray'}
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
+
+      {/* Bottom Drop Stage Tray (Appears while dragging) */}
+      {draggingApp && (
+        <View style={[styles.bottomDropTray, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+          <View style={styles.bottomDropTrayHeader}>
+            <Ionicons name="arrow-down-circle" size={16} color={COLORS.primary} />
+            <Text style={styles.bottomDropTrayTitle}>
+              Drop directly onto any stage below:
+            </Text>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.bottomDropTrayScroll}
+            onScroll={(e) => {
+              bottomTrayScrollX.current = e.nativeEvent.contentOffset.x;
+            }}
+            scrollEventThrottle={16}
+          >
+            {stages.map((stg) => {
+              const isHovered = hoveredStageId === stg.id;
+              const isCurrent = draggingApp.currentStageId === stg.id;
+              const stageColor = getStageThemeColor(stg);
+
+              return (
+                <View
+                  key={stg.id}
+                  style={[
+                    styles.bottomDropTrayChip,
+                    isHovered && { backgroundColor: stageColor, borderColor: stageColor },
+                    isCurrent && styles.bottomDropTrayChipCurrent,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.stageColorDot,
+                      { backgroundColor: isHovered ? '#FFFFFF' : stageColor },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.bottomDropTrayChipText,
+                      isHovered && { color: '#FFFFFF', fontWeight: '700' },
+                      isCurrent && { color: COLORS.textMuted },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {stg.name}
+                  </Text>
+                  {isCurrent && (
+                    <Text style={styles.currentStageTag}>(Current)</Text>
+                  )}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </View>
       )}
 
       {/* Stage Movement Modal */}
@@ -473,22 +955,31 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         animationType="slide"
         onRequestClose={() => setTransitionModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>Move Candidate</Text>
-                <Text style={styles.modalSub}>
-                  {selectedApplication?.candidate?.firstName}{' '}
-                  {selectedApplication?.candidate?.lastName}
-                </Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setTransitionModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Move Candidate</Text>
+                  <Text style={styles.modalSub}>
+                    {selectedApplication?.candidate?.firstName}{' '}
+                    {selectedApplication?.candidate?.lastName}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => setTransitionModalVisible(false)}>
+                  <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => setTransitionModalVisible(false)}>
-                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </View>
 
-            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
+              <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
               <Text style={styles.sectionLabel}>Select Destination Stage</Text>
               <View style={styles.stagePickerCol}>
                 {stages.map((stg) => {
@@ -651,7 +1142,8 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
             </View>
           </View>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
+    </Modal>
 
       {/* Add Candidate to Pipeline Modal */}
       <Modal
@@ -660,17 +1152,26 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         animationType="slide"
         onRequestClose={() => setAddCandidateModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>Add Candidate to Pipeline</Text>
-                <Text style={styles.modalSub}>{jobTitle}</Text>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setAddCandidateModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View>
+                  <Text style={styles.modalTitle}>Add Candidate to Pipeline</Text>
+                  <Text style={styles.modalSub}>{jobTitle}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setAddCandidateModalVisible(false)}>
+                  <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => setAddCandidateModalVisible(false)}>
-                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </View>
 
             <View style={styles.addModalBody}>
               {/* Search Candidates Input */}
@@ -803,7 +1304,8 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
             </View>
           </View>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
+    </Modal>
     </View>
   );
 };
@@ -854,6 +1356,298 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  viewToggleGroup: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surfaceSecondary,
+    borderRadius: RADIUS.sm,
+    padding: 2,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
+  viewToggleBtn: {
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: RADIUS.xs,
+  },
+  viewToggleBtnActive: {
+    backgroundColor: COLORS.surface,
+    ...SHADOWS.sm,
+  },
+  // =========================================================================
+  // KANBAN BOARD STYLES
+  // =========================================================================
+  boardScrollContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  kanbanColumn: {
+    width: COLUMN_WIDTH,
+    marginRight: COLUMN_MARGIN,
+    backgroundColor: COLORS.surfaceSecondary,
+    borderRadius: RADIUS.lg,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: COLORS.borderLight,
+    maxHeight: '100%',
+    flex: 1,
+  },
+  kanbanColumnHovered: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#EFF6FF',
+    ...SHADOWS.md,
+  },
+  columnHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 10,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
+  },
+  columnHeaderTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 6,
+  },
+  stageColorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  columnTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  countBadge: {
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    marginLeft: 6,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  countBadgeText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  addCardToColumnBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  columnScroll: {
+    flex: 1,
+  },
+  columnScrollContent: {
+    paddingBottom: 16,
+  },
+  emptyColumnDropArea: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingVertical: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  emptyColumnText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginTop: 6,
+  },
+  emptyColumnSubtext: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: COLORS.textLight,
+    marginTop: 2,
+  },
+  dropZoneBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primaryLight,
+    borderRadius: RADIUS.sm,
+    paddingVertical: 5,
+    marginBottom: 8,
+    gap: 4,
+  },
+  dropZoneBannerText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+  kanbanCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
+  },
+  kanbanCardGhost: {
+    opacity: 0.3,
+  },
+  kanbanCardTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  kanbanCardCandidateInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 6,
+  },
+  dragGripHandle: {
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kanbanCardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  kanbanCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  unscoredPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceSecondary,
+  },
+  unscoredPillText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+  },
+  floatingDragCard: {
+    position: 'absolute',
+    zIndex: 9999,
+    elevation: 16,
+    ...SHADOWS.lg,
+  },
+  floatingCardInner: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    padding: 12,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  floatingCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  floatingDropHintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primaryLight,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: RADIUS.sm,
+    marginTop: 8,
+    gap: 4,
+  },
+  floatingDropHintBadgeActive: {
+    backgroundColor: COLORS.primary,
+  },
+  floatingDropHintText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.primary,
+    flex: 1,
+  },
+  floatingDropHintTextActive: {
+    color: '#FFFFFF',
+  },
+  bottomDropTray: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.surface,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: 8,
+    zIndex: 9998,
+    elevation: 14,
+    ...SHADOWS.lg,
+  },
+  bottomDropTrayHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 6,
+    gap: 6,
+  },
+  bottomDropTrayTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  bottomDropTrayScroll: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+    gap: 8,
+  },
+  bottomDropTrayChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceSecondary,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    minWidth: 110,
+  },
+  bottomDropTrayChipCurrent: {
+    opacity: 0.5,
+  },
+  bottomDropTrayChipText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  currentStageTag: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    color: COLORS.textMuted,
+    marginLeft: 4,
   },
   stageTabsContainer: {
     backgroundColor: COLORS.surface,
@@ -1010,7 +1804,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
-    maxHeight: '90%',
+    maxHeight: '85%',
     paddingBottom: 20,
   },
   modalHeader: {

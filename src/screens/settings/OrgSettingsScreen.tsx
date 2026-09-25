@@ -22,11 +22,11 @@ import { Header } from '../../components/Header';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { TeamSettingsTab } from './TeamSettingsTab';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
-import { API_BASE_URL } from '../../api/client';
+import { getServerRoot } from '../../api/client';
 
 const getLogoUri = (url?: string) => {
   if (!url) return null;
-  const serverRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const serverRoot = getServerRoot();
   const full =
     url.startsWith('http') || url.startsWith('data:')
       ? url
@@ -135,7 +135,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
 
   const handleOpenCareerPortal = () => {
     if (slug) {
-      const serverRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+      const serverRoot = getServerRoot();
       const host = serverRoot.replace(/:3000$/, ':5173');
       const url = `${host}/careers/${slug}`;
       Linking.openURL(url).catch(() => {

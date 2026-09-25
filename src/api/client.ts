@@ -6,12 +6,14 @@ import { Platform } from 'react-native';
 const ACCESS_TOKEN_KEY = 'ats_access_token';
 const REFRESH_TOKEN_KEY = 'ats_refresh_token';
 
-export const CLOUDFLARE_TUNNEL_URL = 'https://plant-discrimination-which-briefing.trycloudflare.com';
+export const CLOUDFLARE_TUNNEL_URL = 'https://hey-qld-declared-switching.trycloudflare.com';
+export const LOCAL_LAN_URL = 'http://192.168.1.35:3000/api/v1';
 
 // Automatically resolve backend host based on platform and Expo environment
 const getBaseUrl = (): string => {
   if (process.env.EXPO_PUBLIC_API_URL) {
-    return `${process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '')}/api/v1`;
+    const raw = process.env.EXPO_PUBLIC_API_URL.trim().replace(/\/+$/, '');
+    return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
   }
 
   // If running via Expo Go or Dev Client on a physical phone, resolve dev machine's LAN IP
@@ -39,6 +41,11 @@ export const API_BASE_URL = getBaseUrl();
 export const setApiBaseUrl = (newUrl: string) => {
   const formatted = newUrl.endsWith('/api/v1') ? newUrl : `${newUrl.replace(/\/+$/, '')}/api/v1`;
   apiClient.defaults.baseURL = formatted;
+};
+
+export const getServerRoot = (): string => {
+  const base = apiClient.defaults.baseURL || API_BASE_URL;
+  return base.replace(/\/api\/v1\/?$/, '');
 };
 
 export const apiClient = axios.create({
@@ -195,7 +202,8 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        const baseUrl = apiClient.defaults.baseURL || API_BASE_URL;
+        const { data } = await axios.post(`${baseUrl}/auth/refresh`, {
           refreshToken,
         });
 

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../theme/theme';
-import { API_BASE_URL } from '../api/client';
+import { getServerRoot } from '../api/client';
 
 interface HeaderProps {
   title: string;
@@ -15,7 +15,7 @@ interface HeaderProps {
 
 const getLogoUri = (url?: string) => {
   if (!url) return null;
-  const serverRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+  const serverRoot = getServerRoot();
   const full =
     url.startsWith('http') || url.startsWith('data:')
       ? url

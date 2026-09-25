@@ -8,6 +8,9 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -84,93 +87,114 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
   const currentVerdict = getRatingLabel(rating);
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.overlay}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>Interview Scorecard</Text>
-              <Text style={styles.candidateName}>
-                {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={20} color={COLORS.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Star Rating Picker */}
-          <Text style={styles.label}>Evaluation Verdict</Text>
-          <View style={styles.starPickerRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity
-                key={star}
-                style={styles.starTouchable}
-                onPress={() => setRating(star)}
-              >
-                <Ionicons
-                  name={star <= rating ? 'star' : 'star-outline'}
-                  size={32}
-                  color={star <= rating ? '#F59E0B' : '#CBD5E1'}
-                />
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.overlay}>
+          <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>Interview Scorecard</Text>
+                <Text style={styles.candidateName}>
+                  {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
               </TouchableOpacity>
-            ))}
-          </View>
+            </View>
 
-          <View style={[styles.verdictBadge, { backgroundColor: currentVerdict.bg }]}>
-            <Text style={[styles.ratingLabel, { color: currentVerdict.color }]}>
-              {currentVerdict.text}
-            </Text>
-          </View>
-
-          {/* Feedback Notes */}
-          <Text style={styles.label}>Technical & Behavioral Notes</Text>
-          <TextInput
-            style={styles.notesInput}
-            placeholder="Document code review, architecture insights, problem-solving depth, and areas for growth..."
-            placeholderTextColor={COLORS.textLight}
-            multiline
-            numberOfLines={4}
-            value={notes}
-            onChangeText={setNotes}
-          />
-
-          {/* Actions */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={isSubmitting}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.scrollBody}
             >
-              {isSubmitting ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.submitBtnText}>Save Scorecard</Text>
-              )}
-            </TouchableOpacity>
+              {/* Star Rating Picker */}
+              <Text style={styles.label}>Evaluation Verdict</Text>
+              <View style={styles.starPickerRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    style={styles.starTouchable}
+                    onPress={() => setRating(star)}
+                  >
+                    <Ionicons
+                      name={star <= rating ? 'star' : 'star-outline'}
+                      size={32}
+                      color={star <= rating ? '#F59E0B' : '#CBD5E1'}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={[styles.verdictBadge, { backgroundColor: currentVerdict.bg }]}>
+                <Text style={[styles.ratingLabel, { color: currentVerdict.color }]}>
+                  {currentVerdict.text}
+                </Text>
+              </View>
+
+              {/* Feedback Notes */}
+              <Text style={styles.label}>Technical & Behavioral Notes</Text>
+              <TextInput
+                style={styles.notesInput}
+                placeholder="Document code review, architecture insights, problem-solving depth, and areas for growth..."
+                placeholderTextColor={COLORS.textLight}
+                multiline
+                numberOfLines={4}
+                value={notes}
+                onChangeText={setNotes}
+              />
+            </ScrollView>
+
+            {/* Actions */}
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={isSubmitting}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Save Scorecard</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoid: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'flex-end',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFill,
   },
   content: {
     backgroundColor: COLORS.surface,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
     padding: 20,
-    maxHeight: '90%',
+    maxHeight: '85%',
+  },
+  scrollBody: {
+    paddingBottom: 16,
   },
   header: {
     flexDirection: 'row',

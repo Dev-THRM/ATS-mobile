@@ -10,6 +10,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -496,8 +497,17 @@ export const TeamSettingsTab: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setIsInviteModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setIsInviteModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
@@ -700,7 +710,8 @@ export const TeamSettingsTab: React.FC = () => {
             </View>
           </View>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
+    </Modal>
 
 
       {/* =====================================================================
@@ -712,8 +723,17 @@ export const TeamSettingsTab: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setIsEditModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              activeOpacity={1}
+              onPress={() => setIsEditModalVisible(false)}
+            />
+            <View style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
@@ -968,7 +988,8 @@ export const TeamSettingsTab: React.FC = () => {
             </View>
           </View>
         </View>
-      </Modal>
+      </KeyboardAvoidingView>
+    </Modal>
     </View>
   );
 };
@@ -1335,7 +1356,7 @@ const styles = StyleSheet.create({
     padding: 22,
     width: '100%',
     maxWidth: 620,
-    maxHeight: '92%',
+    maxHeight: '86%',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...SHADOWS.sm,

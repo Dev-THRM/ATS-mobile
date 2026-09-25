@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       const response = await authApi.login({
-        email: user?.email || 'bijlanisahil0987@gmail.com',
+        email: user?.email || '',
         password: 'Password123!',
         organizationSlug,
       });
