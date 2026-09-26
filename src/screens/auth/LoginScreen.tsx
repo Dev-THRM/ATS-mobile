@@ -183,7 +183,7 @@ export const LoginScreen: React.FC = () => {
             <View style={styles.logoBadge}>
               <Ionicons name="sparkles" size={24} color="#FFFFFF" />
             </View>
-            <Text style={styles.brandTitle}>ATS Recruiter</Text>
+            <Text style={styles.brandTitle}>THRM Universe</Text>
             <Text style={styles.brandSubtitle}>
               Hiring Pipeline & AI Candidate Screening
             </Text>

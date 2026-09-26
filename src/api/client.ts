@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 const ACCESS_TOKEN_KEY = 'ats_access_token';
 const REFRESH_TOKEN_KEY = 'ats_refresh_token';
 
+export const PROD_API_URL = 'https://api.thrmuniverse.in/api/v1';
 export const CLOUDFLARE_TUNNEL_URL = 'https://hey-qld-declared-switching.trycloudflare.com';
 export const LOCAL_LAN_URL = 'http://192.168.1.35:3000/api/v1';
 
@@ -25,15 +26,15 @@ const getBaseUrl = (): string => {
   if (hostUri) {
     const ip = hostUri.split(':')[0];
     if (ip && ip.includes('exp.direct')) {
-      return `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+      return PROD_API_URL;
     }
     if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
       return `http://${ip}:3000/api/v1`;
     }
   }
 
-  // Fallback to active cloudflare tunnel URL
-  return `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+  // Fallback to active hosted production backend URL
+  return PROD_API_URL;
 };
 
 export const API_BASE_URL = getBaseUrl();

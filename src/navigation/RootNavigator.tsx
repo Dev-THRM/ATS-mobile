@@ -14,7 +14,7 @@ export const RootNavigator: React.FC = () => {
     return (
       <View style={styles.loadingContainer}>
         <StatusBar style="dark" />
-        <LoadingSpinner message="Starting ATS Recruiter..." />
+        <LoadingSpinner message="Starting THRM Universe..." />
       </View>
     );
   }
