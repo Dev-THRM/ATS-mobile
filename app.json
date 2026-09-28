@@ -6,9 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "backgroundColor": "#4F46E5"
-    },
     "scheme": "atsrecruiter",
     "ios": {
       "supportsTablet": true,
@@ -27,7 +24,15 @@
     "plugins": [
       "expo-secure-store",
       "expo-document-picker",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#4F46E5",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ]
     ],
     "web": {
       "favicon": "./assets/favicon.png"
