@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,9 +33,31 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
   onSuccess,
 }) => {
   const queryClient = useQueryClient();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [rating, setRating] = useState<number>(interview.feedbackRating || 5);
   const [notes, setNotes] = useState<string>(interview.feedbackNotes || '');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setIsKeyboardOpen(true);
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 120);
+      },
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardOpen(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (interview) {
@@ -107,23 +130,25 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <KeyboardAvoidingView
-          style={styles.keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={[styles.keyboardAvoid, isKeyboardOpen && styles.keyboardAvoidActive]}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
         >
-          <View style={styles.content}>
+          <View style={[styles.content, isKeyboardOpen && styles.contentKeyboardOpen]}>
             <View style={styles.header}>
-              <View>
+              <View style={{ flex: 1, marginRight: 8 }}>
                 <Text style={styles.title}>Interview Scorecard</Text>
-                <Text style={styles.candidateName}>
+                <Text style={styles.candidateName} numberOfLines={1}>
                   {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
                 </Text>
               </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close" size={22} color={COLORS.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView
+              ref={scrollViewRef}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.scrollBody}
@@ -136,6 +161,7 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
                     key={star}
                     style={styles.starTouchable}
                     onPress={() => setRating(star)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons
                       name={star <= rating ? 'star' : 'star-outline'}
@@ -156,7 +182,7 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
               <Text style={styles.label}>Technical & Behavioral Notes</Text>
               <TextInput
                 style={styles.notesInput}
-                placeholder="Document code review, architecture insights, problem-solving depth, and areas for growth..."
+                placeholder="Document code review, architecture insights, depth, and growth areas..."
                 placeholderTextColor="#94A3B8"
                 multiline
                 numberOfLines={4}
@@ -164,27 +190,32 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
                 onChangeText={setNotes}
                 selectionColor={COLORS.primary}
                 cursorColor={COLORS.primary}
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 120);
+                }}
               />
+
+              {/* Actions inside ScrollView to ensure they are always visible and tap-able */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={isSubmitting}>
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <Text style={styles.submitBtnText}>Save Scorecard</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </ScrollView>
-
-            {/* Actions */}
-            <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={isSubmitting}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Save Scorecard</Text>
-                )}
-              </TouchableOpacity>
-            </View>
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -195,7 +226,7 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
     justifyContent: 'flex-end',
   },
   backdrop: {
@@ -205,26 +236,37 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'flex-end',
   },
+  keyboardAvoidActive: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   content: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 24,
     maxHeight: '90%',
     ...SHADOWS.lg,
   },
+  contentKeyboardOpen: {
+    flex: 1,
+    maxHeight: '100%',
+    paddingBottom: 12,
+  },
   scrollBody: {
-    paddingBottom: 16,
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 14,
+    alignItems: 'center',
+    marginBottom: 12,
   },
   title: {
     fontFamily: FONTS.family,
-    fontSize: 16,
+    fontSize: 16.5,
     fontWeight: '700',
     color: '#0F172A',
   },
@@ -275,7 +317,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0F172A',
     textAlignVertical: 'top',
-    minHeight: 100,
+    minHeight: 90,
     marginBottom: 16,
   },
   actionsRow: {
