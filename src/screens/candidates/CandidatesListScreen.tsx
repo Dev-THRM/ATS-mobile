@@ -24,9 +24,11 @@ import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { Candidate } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const queryClient = useQueryClient();
+  const { keyboardHeight: candKbHeight, maxModalHeight: candMaxHeight, onInputFocus: candInputFocus } = useKeyboardShift();
   const [search, setSearch] = useState('');
 
   // Add Candidate Modal State
@@ -330,18 +332,15 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
         animationType="slide"
         transparent
         onRequestClose={() => setAddModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setAddModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: candKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setAddModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: candMaxHeight }]}>
               <View style={styles.modalHeader}>
                 <View>
                   <Text style={styles.modalTitle}>Add Candidate</Text>
@@ -362,6 +361,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                     placeholderTextColor={COLORS.textLight}
                     value={firstName}
                     onChangeText={setFirstName}
+                    onFocus={candInputFocus}
                   />
                 </View>
 
@@ -373,6 +373,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                     placeholderTextColor={COLORS.textLight}
                     value={lastName}
                     onChangeText={setLastName}
+                    onFocus={candInputFocus}
                   />
                 </View>
               </View>
@@ -387,6 +388,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                   autoCapitalize="none"
                   value={email}
                   onChangeText={setEmail}
+                  onFocus={candInputFocus}
                 />
               </View>
 
@@ -399,6 +401,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                   keyboardType="phone-pad"
                   value={phone}
                   onChangeText={setPhone}
+                  onFocus={candInputFocus}
                 />
               </View>
 
@@ -411,6 +414,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                     placeholderTextColor={COLORS.textLight}
                     value={currentTitle}
                     onChangeText={setCurrentTitle}
+                    onFocus={candInputFocus}
                   />
                 </View>
 
@@ -422,6 +426,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                     placeholderTextColor={COLORS.textLight}
                     value={currentCompany}
                     onChangeText={setCurrentCompany}
+                    onFocus={candInputFocus}
                   />
                 </View>
               </View>
@@ -434,6 +439,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                   placeholderTextColor={COLORS.textLight}
                   value={location}
                   onChangeText={setLocation}
+                  onFocus={candInputFocus}
                 />
               </View>
 
@@ -445,6 +451,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                   placeholderTextColor={COLORS.textLight}
                   value={skillsText}
                   onChangeText={setSkillsText}
+                  onFocus={candInputFocus}
                 />
               </View>
 
@@ -457,6 +464,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
                   autoCapitalize="none"
                   value={linkedinUrl}
                   onChangeText={setLinkedinUrl}
+                  onFocus={candInputFocus}
                 />
               </View>
 
@@ -528,8 +536,7 @@ export const CandidatesListScreen: React.FC<{ navigation: any }> = ({ navigation
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
     </View>
   );
 };

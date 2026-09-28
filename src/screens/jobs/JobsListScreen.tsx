@@ -22,6 +22,7 @@ import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { Job, EmploymentType, JobStatus } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 const STATUS_FILTERS: Array<{ label: string; value: 'ALL' | JobStatus }> = [
   { label: 'All', value: 'ALL' },
@@ -39,6 +40,7 @@ const EMPLOYMENT_TYPES: Array<{ label: string; value: EmploymentType }> = [
 
 export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const queryClient = useQueryClient();
+  const { keyboardHeight: jobKbHeight, maxModalHeight: jobMaxHeight, onInputFocus: jobInputFocus } = useKeyboardShift();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | JobStatus>('ALL');
 
@@ -310,18 +312,15 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         animationType="slide"
         transparent
         onRequestClose={() => setCreateModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setCreateModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: jobKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setCreateModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: jobMaxHeight }]}>
               <View style={styles.modalHeader}>
                 <View>
                   <Text style={styles.modalTitle}>Post New Position</Text>
@@ -341,6 +340,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                   placeholderTextColor={COLORS.textLight}
                   value={title}
                   onChangeText={setTitle}
+                  onFocus={jobInputFocus}
                 />
               </View>
 
@@ -353,6 +353,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                     placeholderTextColor={COLORS.textLight}
                     value={department}
                     onChangeText={setDepartment}
+                    onFocus={jobInputFocus}
                   />
                 </View>
 
@@ -364,6 +365,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                     placeholderTextColor={COLORS.textLight}
                     value={location}
                     onChangeText={setLocation}
+                    onFocus={jobInputFocus}
                   />
                 </View>
               </View>
@@ -398,6 +400,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                     keyboardType="numeric"
                     value={salaryMin}
                     onChangeText={setSalaryMin}
+                    onFocus={jobInputFocus}
                   />
                 </View>
 
@@ -410,6 +413,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                     keyboardType="numeric"
                     value={salaryMax}
                     onChangeText={setSalaryMax}
+                    onFocus={jobInputFocus}
                   />
                 </View>
               </View>
@@ -423,6 +427,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                   multiline
                   value={description}
                   onChangeText={setDescription}
+                  onFocus={jobInputFocus}
                 />
               </View>
             </ScrollView>
@@ -449,8 +454,7 @@ export const JobsListScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
     </View>
   );
 };

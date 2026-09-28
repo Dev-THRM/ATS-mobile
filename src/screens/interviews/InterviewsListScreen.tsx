@@ -24,6 +24,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { SubmitFeedbackModal } from './SubmitFeedbackModal';
 import { Interview, InterviewStatus, InterviewType } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 const STATUS_FILTERS: { label: string; value: string }[] = [
   { label: 'All', value: '' },
@@ -43,6 +44,7 @@ const INTERVIEW_TYPES: Array<{ label: string; value: InterviewType }> = [
 
 export const InterviewsListScreen: React.FC = () => {
   const queryClient = useQueryClient();
+  const { keyboardHeight: scheduleKbHeight, maxModalHeight: scheduleMaxHeight, onInputFocus: scheduleInputFocus } = useKeyboardShift();
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [search, setSearch] = useState<string>('');
 
@@ -381,18 +383,15 @@ export const InterviewsListScreen: React.FC = () => {
         animationType="slide"
         transparent
         onRequestClose={() => setScheduleModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setScheduleModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: scheduleKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setScheduleModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: scheduleMaxHeight }]}>
               <View style={styles.modalHeader}>
                 <View>
                   <Text style={styles.modalTitle}>Schedule Interview</Text>
@@ -441,6 +440,7 @@ export const InterviewsListScreen: React.FC = () => {
                   placeholderTextColor={COLORS.textLight}
                   value={title}
                   onChangeText={setTitle}
+                  onFocus={scheduleInputFocus}
                 />
               </View>
 
@@ -452,6 +452,7 @@ export const InterviewsListScreen: React.FC = () => {
                   placeholderTextColor={COLORS.textLight}
                   value={scheduledAt}
                   onChangeText={setScheduledAt}
+                  onFocus={scheduleInputFocus}
                 />
               </View>
 
@@ -464,6 +465,7 @@ export const InterviewsListScreen: React.FC = () => {
                   keyboardType="numeric"
                   value={durationMinutes}
                   onChangeText={setDurationMinutes}
+                  onFocus={scheduleInputFocus}
                 />
               </View>
 
@@ -476,6 +478,7 @@ export const InterviewsListScreen: React.FC = () => {
                   autoCapitalize="none"
                   value={meetingLink}
                   onChangeText={setMeetingLink}
+                  onFocus={scheduleInputFocus}
                 />
               </View>
             </ScrollView>
@@ -502,8 +505,7 @@ export const InterviewsListScreen: React.FC = () => {
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
     </View>
   );
 };

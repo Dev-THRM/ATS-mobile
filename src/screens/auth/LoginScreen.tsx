@@ -21,6 +21,7 @@ import { StatusBar } from 'expo-status-bar';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 import { API_BASE_URL, PROD_API_URL, LOCAL_LAN_URL, setApiBaseUrl } from '../../api/client';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 export const LoginScreen: React.FC<any> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -34,6 +35,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
   const [workspacesList, setWorkspacesList] = useState<Array<{ id: string; name: string; slug: string }>>([]);
 
   // Forgot password modal state
+  const { keyboardHeight: forgotKbHeight, maxModalHeight: forgotMaxHeight, onInputFocus: forgotInputFocus } = useKeyboardShift();
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSlug, setForgotSlug] = useState('');
@@ -301,105 +303,103 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
             transparent
             animationType="fade"
             onRequestClose={() => setIsForgotModalVisible(false)}
+            statusBarTranslucent
           >
-            <KeyboardAvoidingView
-              style={{ flex: 1 }}
-              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            >
-              <View style={styles.modalOverlay}>
-                <TouchableOpacity
-                  style={StyleSheet.absoluteFill}
-                  activeOpacity={1}
-                  onPress={() => setIsForgotModalVisible(false)}
-                />
-                <View style={styles.modalCard}>
-                  <View style={styles.modalHeader}>
-                    <View style={styles.modalHeaderIcon}>
-                      <Ionicons name="key-outline" size={20} color={COLORS.primary} />
-                    </View>
-                    <Text style={styles.modalTitle}>Reset Password</Text>
-                    <TouchableOpacity
-                      onPress={() => setIsForgotModalVisible(false)}
-                      style={styles.modalCloseButton}
-                    >
-                      <Ionicons name="close" size={20} color={COLORS.textMuted} />
-                    </TouchableOpacity>
+            <View style={[styles.modalOverlay, { paddingBottom: forgotKbHeight }]}>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFill}
+                activeOpacity={1}
+                onPress={() => setIsForgotModalVisible(false)}
+              />
+              <View style={[styles.modalCard, { maxHeight: forgotMaxHeight }]}>
+                <View style={styles.modalHeader}>
+                  <View style={styles.modalHeaderIcon}>
+                    <Ionicons name="key-outline" size={20} color={COLORS.primary} />
                   </View>
-
-                  <Text style={styles.modalSubtitle}>
-                    Enter your work email address to receive password reset instructions.
-                  </Text>
-
-                  {forgotSuccess ? (
-                    <View style={styles.successBanner}>
-                      <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
-                      <Text style={styles.successText}>{forgotSuccess}</Text>
-                    </View>
-                  ) : null}
-
-                  {forgotError ? (
-                    <View style={styles.errorBanner}>
-                      <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
-                      <Text style={styles.errorText}>{forgotError}</Text>
-                    </View>
-                  ) : null}
-
-                  {!forgotSuccess ? (
-                    <>
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>Work Email</Text>
-                        <View style={styles.inputWrapper}>
-                          <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                          <TextInput
-                            style={styles.input}
-                            placeholder="you@company.com"
-                            placeholderTextColor={COLORS.textLight}
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            value={forgotEmail}
-                            onChangeText={setForgotEmail}
-                          />
-                        </View>
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
-                        <View style={styles.inputWrapper}>
-                          <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                          <TextInput
-                            style={styles.input}
-                            placeholder="acme-corp"
-                            placeholderTextColor={COLORS.textLight}
-                            autoCapitalize="none"
-                            value={forgotSlug}
-                            onChangeText={setForgotSlug}
-                          />
-                        </View>
-                      </View>
-
-                      <TouchableOpacity
-                        style={[styles.loginButton, forgotLoading && styles.disabledButton]}
-                        onPress={handleForgotPassword}
-                        disabled={forgotLoading}
-                      >
-                        {forgotLoading ? (
-                          <ActivityIndicator color="#FFFFFF" size="small" />
-                        ) : (
-                          <Text style={styles.loginButtonText}>Send Reset Link</Text>
-                        )}
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.loginButton}
-                      onPress={() => setIsForgotModalVisible(false)}
-                    >
-                      <Text style={styles.loginButtonText}>Back to Sign In</Text>
-                    </TouchableOpacity>
-                  )}
+                  <Text style={styles.modalTitle}>Reset Password</Text>
+                  <TouchableOpacity
+                    onPress={() => setIsForgotModalVisible(false)}
+                    style={styles.modalCloseButton}
+                  >
+                    <Ionicons name="close" size={20} color={COLORS.textMuted} />
+                  </TouchableOpacity>
                 </View>
+
+                <Text style={styles.modalSubtitle}>
+                  Enter your work email address to receive password reset instructions.
+                </Text>
+
+                {forgotSuccess ? (
+                  <View style={styles.successBanner}>
+                    <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+                    <Text style={styles.successText}>{forgotSuccess}</Text>
+                  </View>
+                ) : null}
+
+                {forgotError ? (
+                  <View style={styles.errorBanner}>
+                    <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
+                    <Text style={styles.errorText}>{forgotError}</Text>
+                  </View>
+                ) : null}
+
+                {!forgotSuccess ? (
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Work Email</Text>
+                      <View style={styles.inputWrapper}>
+                        <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="you@company.com"
+                          placeholderTextColor={COLORS.textLight}
+                          autoCapitalize="none"
+                          keyboardType="email-address"
+                          value={forgotEmail}
+                          onChangeText={setForgotEmail}
+                          onFocus={forgotInputFocus}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
+                      <View style={styles.inputWrapper}>
+                        <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="acme-corp"
+                          placeholderTextColor={COLORS.textLight}
+                          autoCapitalize="none"
+                          value={forgotSlug}
+                          onChangeText={setForgotSlug}
+                          onFocus={forgotInputFocus}
+                        />
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.loginButton, forgotLoading && styles.disabledButton]}
+                      onPress={handleForgotPassword}
+                      disabled={forgotLoading}
+                    >
+                      {forgotLoading ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={styles.loginButtonText}>Send Reset Link</Text>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.loginButton}
+                    onPress={() => setIsForgotModalVisible(false)}
+                  >
+                    <Text style={styles.loginButtonText}>Back to Sign In</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            </KeyboardAvoidingView>
+            </View>
           </Modal>
         </ScrollView>
       </KeyboardAvoidingView>

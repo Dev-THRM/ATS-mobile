@@ -19,10 +19,12 @@ import { useAuth } from '../../context/AuthContext';
 import { OrganizationMember, OrganizationRole } from '../../types/auth.types';
 import { EmptyState } from '../../components/EmptyState';
 import { COLORS, FONTS, RADIUS, SHADOWS } from '../../theme/theme';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 export const TeamSettingsTab: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { keyboardHeight: teamKbHeight, maxModalHeight: teamMaxHeight, onInputFocus: teamInputFocus } = useKeyboardShift();
 
   const isSuperAdminOrAdmin =
     user?.role?.type === 'SUPER_ADMIN' || user?.role?.type === 'ADMIN';
@@ -496,18 +498,15 @@ export const TeamSettingsTab: React.FC = () => {
         transparent
         animationType="fade"
         onRequestClose={() => setIsInviteModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setIsInviteModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: teamKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setIsInviteModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: teamMaxHeight }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
@@ -557,6 +556,7 @@ export const TeamSettingsTab: React.FC = () => {
                       placeholderTextColor="#94A3B8"
                       value={firstName}
                       onChangeText={setFirstName}
+                      onFocus={teamInputFocus}
                     />
                   </View>
                   <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -567,6 +567,7 @@ export const TeamSettingsTab: React.FC = () => {
                       placeholderTextColor="#94A3B8"
                       value={lastName}
                       onChangeText={setLastName}
+                      onFocus={teamInputFocus}
                     />
                   </View>
                 </View>
@@ -584,6 +585,7 @@ export const TeamSettingsTab: React.FC = () => {
                       autoCapitalize="none"
                       value={email}
                       onChangeText={setEmail}
+                      onFocus={teamInputFocus}
                     />
                   </View>
                   <Text style={styles.inputSubHint}>
@@ -603,6 +605,7 @@ export const TeamSettingsTab: React.FC = () => {
                       keyboardType="phone-pad"
                       value={phone}
                       onChangeText={setPhone}
+                      onFocus={teamInputFocus}
                     />
                   </View>
                 </View>
@@ -710,8 +713,7 @@ export const TeamSettingsTab: React.FC = () => {
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
 
 
       {/* =====================================================================
@@ -722,18 +724,15 @@ export const TeamSettingsTab: React.FC = () => {
         transparent
         animationType="fade"
         onRequestClose={() => setIsEditModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setIsEditModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: teamKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setIsEditModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: teamMaxHeight }]}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
@@ -787,6 +786,7 @@ export const TeamSettingsTab: React.FC = () => {
                         placeholderTextColor="#94A3B8"
                         value={editFirstName}
                         onChangeText={setEditFirstName}
+                        onFocus={teamInputFocus}
                       />
                     </View>
                   </View>
@@ -800,6 +800,7 @@ export const TeamSettingsTab: React.FC = () => {
                         placeholderTextColor="#94A3B8"
                         value={editLastName}
                         onChangeText={setEditLastName}
+                        onFocus={teamInputFocus}
                       />
                     </View>
                   </View>
@@ -833,6 +834,7 @@ export const TeamSettingsTab: React.FC = () => {
                       keyboardType="phone-pad"
                       value={editPhone}
                       onChangeText={setEditPhone}
+                      onFocus={teamInputFocus}
                     />
                   </View>
                 </View>
@@ -988,8 +990,7 @@ export const TeamSettingsTab: React.FC = () => {
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
     </View>
   );
 };

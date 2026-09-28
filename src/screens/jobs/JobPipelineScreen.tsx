@@ -29,6 +29,7 @@ import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { Application, Candidate, PipelineStage } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const COLUMN_WIDTH = Math.min(320, SCREEN_WIDTH * 0.82);
@@ -183,6 +184,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   const insets = useSafeAreaInsets();
   const { jobId, jobTitle } = route?.params || {};
   const queryClient = useQueryClient();
+  const { keyboardHeight: pipeKbHeight, maxModalHeight: pipeMaxHeight, onInputFocus: pipeInputFocus } = useKeyboardShift();
 
   const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 14) + 6;
 
@@ -954,18 +956,15 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         transparent
         animationType="slide"
         onRequestClose={() => setTransitionModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setTransitionModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: pipeKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setTransitionModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: pipeMaxHeight }]}>
               <View style={styles.modalHeader}>
                 <View>
                   <Text style={styles.modalTitle}>Move Candidate</Text>
@@ -1035,6 +1034,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                       setJoiningDate(val);
                       setJoiningDateError(null);
                     }}
+                    onFocus={pipeInputFocus}
                   />
 
                   {/* Quick Preset Buttons */}
@@ -1084,6 +1084,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                     multiline
                     value={rejectionReason}
                     onChangeText={setRejectionReason}
+                    onFocus={pipeInputFocus}
                   />
                 </View>
               )}
@@ -1116,6 +1117,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                   multiline
                   value={transitionNotes}
                   onChangeText={setTransitionNotes}
+                  onFocus={pipeInputFocus}
                 />
               </View>
             </ScrollView>
@@ -1142,8 +1144,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
 
       {/* Add Candidate to Pipeline Modal */}
       <Modal
@@ -1151,18 +1152,15 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         transparent
         animationType="slide"
         onRequestClose={() => setAddCandidateModalVisible(false)}
+        statusBarTranslucent
       >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFill}
-              activeOpacity={1}
-              onPress={() => setAddCandidateModalVisible(false)}
-            />
-            <View style={styles.modalContent}>
+        <View style={[styles.modalOverlay, { paddingBottom: pipeKbHeight }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setAddCandidateModalVisible(false)}
+          />
+          <View style={[styles.modalContent, { maxHeight: pipeMaxHeight }]}>
               <View style={styles.modalHeader}>
                 <View>
                   <Text style={styles.modalTitle}>Add Candidate to Pipeline</Text>
@@ -1183,6 +1181,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                   placeholderTextColor={COLORS.textLight}
                   value={candidateSearchQuery}
                   onChangeText={setCandidateSearchQuery}
+                  onFocus={pipeInputFocus}
                 />
                 {candidateSearchQuery ? (
                   <TouchableOpacity onPress={() => setCandidateSearchQuery('')}>
@@ -1304,8 +1303,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
             </View>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
     </View>
   );
 };

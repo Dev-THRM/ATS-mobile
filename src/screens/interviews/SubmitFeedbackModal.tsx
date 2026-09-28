@@ -8,16 +8,14 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
   ScrollView,
-  Platform,
-  Keyboard,
 } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { atsApi } from '../../api/ats.api';
 import { Interview } from '../../types/ats.types';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
+import { useKeyboardShift } from '../../hooks/useKeyboardShift';
 
 interface SubmitFeedbackModalProps {
   visible: boolean;
@@ -34,30 +32,10 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const scrollViewRef = useRef<ScrollView>(null);
+  const { keyboardHeight, isKeyboardOpen, maxModalHeight, onInputFocus } = useKeyboardShift();
   const [rating, setRating] = useState<number>(interview.feedbackRating || 5);
   const [notes, setNotes] = useState<string>(interview.feedbackNotes || '');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        setIsKeyboardOpen(true);
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 120);
-      },
-    );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardOpen(false),
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   useEffect(() => {
     if (interview) {
@@ -65,6 +43,14 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
       setNotes(interview.feedbackNotes || '');
     }
   }, [interview]);
+
+  useEffect(() => {
+    if (isKeyboardOpen) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [isKeyboardOpen]);
 
   const handleSubmit = async () => {
     if (rating < 1 || rating > 5) {
@@ -127,97 +113,92 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-        <KeyboardAvoidingView
-          style={[styles.keyboardAvoid, isKeyboardOpen && styles.keyboardAvoidActive]}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
-        >
-          <View style={[styles.content, isKeyboardOpen && styles.contentKeyboardOpen]}>
-            <View style={styles.header}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.title}>Interview Scorecard</Text>
-                <Text style={styles.candidateName} numberOfLines={1}>
-                  {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
-                </Text>
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={22} color={COLORS.textSecondary} />
-              </TouchableOpacity>
+        <View style={[styles.content, { maxHeight: maxModalHeight }]}>
+          <View style={styles.header}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.title}>Interview Scorecard</Text>
+              <Text style={styles.candidateName} numberOfLines={1}>
+                {interview.candidate?.firstName} {interview.candidate?.lastName} • {interview.job?.title}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close" size={22} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            ref={scrollViewRef}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollBody}
+          >
+            {/* Star Rating Picker */}
+            <Text style={styles.label}>Evaluation Verdict</Text>
+            <View style={styles.starPickerRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity
+                  key={star}
+                  style={styles.starTouchable}
+                  onPress={() => setRating(star)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={star <= rating ? 'star' : 'star-outline'}
+                    size={32}
+                    color={star <= rating ? '#F59E0B' : '#CBD5E1'}
+                  />
+                </TouchableOpacity>
+              ))}
             </View>
 
-            <ScrollView
-              ref={scrollViewRef}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.scrollBody}
-            >
-              {/* Star Rating Picker */}
-              <Text style={styles.label}>Evaluation Verdict</Text>
-              <View style={styles.starPickerRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <TouchableOpacity
-                    key={star}
-                    style={styles.starTouchable}
-                    onPress={() => setRating(star)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={star <= rating ? 'star' : 'star-outline'}
-                      size={32}
-                      color={star <= rating ? '#F59E0B' : '#CBD5E1'}
-                    />
-                  </TouchableOpacity>
-                ))}
-              </View>
+            <View style={[styles.verdictBadge, { backgroundColor: currentVerdict.bg }]}>
+              <Text style={[styles.ratingLabel, { color: currentVerdict.color }]}>
+                {currentVerdict.text}
+              </Text>
+            </View>
 
-              <View style={[styles.verdictBadge, { backgroundColor: currentVerdict.bg }]}>
-                <Text style={[styles.ratingLabel, { color: currentVerdict.color }]}>
-                  {currentVerdict.text}
-                </Text>
-              </View>
+            {/* Feedback Notes */}
+            <Text style={styles.label}>Technical & Behavioral Notes</Text>
+            <TextInput
+              style={styles.notesInput}
+              placeholder="Document code review, architecture insights, depth, and growth areas..."
+              placeholderTextColor="#94A3B8"
+              multiline
+              numberOfLines={4}
+              value={notes}
+              onChangeText={setNotes}
+              selectionColor={COLORS.primary}
+              cursorColor={COLORS.primary}
+              onFocus={() => {
+                onInputFocus();
+                setTimeout(() => {
+                  scrollViewRef.current?.scrollToEnd({ animated: true });
+                }, 60);
+              }}
+            />
 
-              {/* Feedback Notes */}
-              <Text style={styles.label}>Technical & Behavioral Notes</Text>
-              <TextInput
-                style={styles.notesInput}
-                placeholder="Document code review, architecture insights, depth, and growth areas..."
-                placeholderTextColor="#94A3B8"
-                multiline
-                numberOfLines={4}
-                value={notes}
-                onChangeText={setNotes}
-                selectionColor={COLORS.primary}
-                cursorColor={COLORS.primary}
-                onFocus={() => {
-                  setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                  }, 120);
-                }}
-              />
+            {/* Actions */}
+            <View style={styles.actionsRow}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={isSubmitting}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
 
-              {/* Actions inside ScrollView to ensure they are always visible and tap-able */}
-              <View style={styles.actionsRow}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={onClose} disabled={isSubmitting}>
-                  <Text style={styles.cancelBtnText}>Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
-                  onPress={handleSubmit}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <Text style={styles.submitBtnText}>Save Scorecard</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
+              <TouchableOpacity
+                style={[styles.submitBtn, isSubmitting && { opacity: 0.6 }]}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.submitBtnText}>Save Scorecard</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -230,15 +211,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  keyboardAvoid: {
-    width: '100%',
-    justifyContent: 'flex-end',
-  },
-  keyboardAvoidActive: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    ...StyleSheet.absoluteFill,
   },
   content: {
     backgroundColor: '#FFFFFF',
@@ -247,13 +220,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 24,
-    maxHeight: '90%',
+    width: '100%',
     ...SHADOWS.lg,
-  },
-  contentKeyboardOpen: {
-    flex: 1,
-    maxHeight: '100%',
-    paddingBottom: 12,
   },
   scrollBody: {
     paddingBottom: 20,
