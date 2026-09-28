@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../api/auth.api';
 import { storeTokens, clearTokens, getAccessToken } from '../api/client';
-import { UserSummary, LoginCredentials } from '../types/auth.types';
+import { UserSummary, LoginCredentials, RegisterPayload } from '../types/auth.types';
 
 interface AuthContextType {
   user: UserSummary | null;
@@ -10,6 +10,7 @@ interface AuthContextType {
   isBootstrapping: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   switchWorkspace: (organizationSlug: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -47,6 +48,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       const response = await authApi.login(credentials);
+      await storeTokens(response.tokens.accessToken, response.tokens.refreshToken);
+      setUser(response.user);
+      queryClient.clear();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (payload: RegisterPayload) => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.register(payload);
       await storeTokens(response.tokens.accessToken, response.tokens.refreshToken);
       setUser(response.user);
       queryClient.clear();
@@ -100,6 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isBootstrapping,
         isLoading,
         login,
+        register,
         switchWorkspace,
         logout,
         refreshUser,

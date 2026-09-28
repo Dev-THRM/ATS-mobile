@@ -556,8 +556,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   logoContainer: {
-    width: 90,
-    height: 60,
+    width: 110,
+    height: 75,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,

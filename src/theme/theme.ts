@@ -47,10 +47,16 @@ export const COLORS = {
 
 export const FONTS = {
   family: Platform.select({
-    web: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    ios: 'System',
-    android: 'Roboto',
-    default: 'normal',
+    web: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    ios: 'Inter',
+    android: 'Inter',
+    default: 'Inter',
+  }),
+  heading: Platform.select({
+    web: '"Plus Jakarta Sans", Inter, -apple-system, sans-serif',
+    ios: 'PlusJakartaSans',
+    android: 'PlusJakartaSans',
+    default: 'PlusJakartaSans',
   }),
 };
 

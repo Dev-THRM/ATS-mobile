@@ -21,7 +21,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
 export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const { user, switchWorkspace } = useAuth();
+  const { user } = useAuth();
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['ats-dashboard'],
@@ -74,35 +74,6 @@ export const DashboardScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[COLORS.primary]} />
         }
       >
-        {/* Workspace Switcher Banner if not viewing THRM Digital Marketing Agency */}
-        {user?.organization?.slug !== 'thrm-digital-marketing-agency' ? (
-          <TouchableOpacity
-            style={styles.switchOrgBanner}
-            onPress={() => switchWorkspace('thrm-digital-marketing-agency')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.switchOrgIconBox}>
-              <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.switchOrgTitle}>Switch to Live Web Workspace</Text>
-              <Text style={styles.switchOrgSub}>
-                Viewing "{user?.organization?.name || 'THRM Core'}". Tap here to load your live THRM Digital Marketing Agency (6 jobs, 10 candidates).
-              </Text>
-            </View>
-            <View style={styles.switchOrgActionPill}>
-              <Text style={styles.switchOrgActionText}>Switch Now →</Text>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.activeOrgIndicator}>
-            <Ionicons name="checkmark-circle" size={15} color="#059669" />
-            <Text style={styles.activeOrgText}>
-              Viewing Live Web Workspace: <Text style={{ fontWeight: '700' }}>THRM Digital Marketing Agency</Text>
-            </Text>
-          </View>
-        )}
-
         {/* Soft Light Blue & White Welcome Card */}
         <View style={styles.lightWelcomeCard}>
           <View style={styles.welcomeTopRow}>

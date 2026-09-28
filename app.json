@@ -26,11 +26,17 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-document-picker"
+      "expo-document-picker",
+      "expo-font"
     ],
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "08b24e09-68a2-473c-8cc3-f7b35c827e49"
+      }
+    },
+    "owner": "bijlani_sahil"
   }
 }
-

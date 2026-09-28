@@ -10,26 +10,27 @@ import {
   Platform,
   ScrollView,
   Modal,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../api/auth.api';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
-import { API_BASE_URL, CLOUDFLARE_TUNNEL_URL, LOCAL_LAN_URL, setApiBaseUrl } from '../../api/client';
-import axios from 'axios';
+import { API_BASE_URL, PROD_API_URL, LOCAL_LAN_URL, setApiBaseUrl } from '../../api/client';
 
-export const LoginScreen: React.FC = () => {
+export const LoginScreen: React.FC<any> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const { login, isLoading } = useAuth();
-  const [orgSlug, setOrgSlug] = useState('thrm-digital-marketing-agency');
+  const [orgSlug, setOrgSlug] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentServerUrl, setCurrentServerUrl] = useState<string>(API_BASE_URL);
-  const [serverStatus, setServerStatus] = useState<'connected' | 'checking' | 'failed'>('connected');
   const [workspacesList, setWorkspacesList] = useState<Array<{ id: string; name: string; slug: string }>>([]);
 
   // Forgot password modal state
@@ -39,10 +40,6 @@ export const LoginScreen: React.FC = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
   const [forgotError, setForgotError] = useState<string | null>(null);
-
-  useEffect(() => {
-    handleTestConnection();
-  }, []);
 
   const handleForgotPassword = async () => {
     if (!forgotEmail.trim()) {
@@ -90,9 +87,9 @@ export const LoginScreen: React.FC = () => {
         err.message?.includes('Network Error');
 
       if (isNetworkIssue) {
-        const alternateUrl = currentServerUrl.includes('trycloudflare.com')
+        const alternateUrl = currentServerUrl.includes('api.thrmuniverse.in')
           ? LOCAL_LAN_URL
-          : `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
+          : PROD_API_URL;
         try {
           setApiBaseUrl(alternateUrl);
           setCurrentServerUrl(alternateUrl);
@@ -124,359 +121,299 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleTestConnection = async () => {
-    setServerStatus('checking');
-    try {
-      await axios.get(`${currentServerUrl}/health/liveness`, { timeout: 3500 });
-      setServerStatus('connected');
-    } catch {
-      // Auto-fallback to alternate tunnel / LAN if current URL times out
-      try {
-        const alternateUrl = currentServerUrl.includes('trycloudflare.com')
-          ? LOCAL_LAN_URL
-          : `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
-        await axios.get(`${alternateUrl}/health/liveness`, { timeout: 3500 });
-        setApiBaseUrl(alternateUrl);
-        setCurrentServerUrl(alternateUrl);
-        setServerStatus('connected');
-      } catch {
-        setServerStatus('failed');
-      }
-    }
-  };
-
-  const handleToggleServer = async () => {
-    const nextUrl = currentServerUrl.includes('trycloudflare.com')
-      ? LOCAL_LAN_URL
-      : `${CLOUDFLARE_TUNNEL_URL}/api/v1`;
-    setApiBaseUrl(nextUrl);
-    setCurrentServerUrl(nextUrl);
-    setServerStatus('checking');
-    try {
-      await axios.get(`${nextUrl}/health/liveness`, { timeout: 3500 });
-      setServerStatus('connected');
-    } catch {
-      setServerStatus('failed');
-    }
-    setError(null);
-  };
-
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 16,
-            paddingBottom: Math.max(insets.bottom, 20),
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <View style={styles.screenWrapper}>
+      <StatusBar style="light" />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.cardContainer}>
-          {/* Brand Header */}
-          <View style={styles.brandContainer}>
-            <View style={styles.logoBadge}>
-              <Ionicons name="sparkles" size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.brandTitle}>THRM Universe</Text>
-            <Text style={styles.brandSubtitle}>
-              Hiring Pipeline & AI Candidate Screening
-            </Text>
-          </View>
-
-          {/* Form Card (Light Blue & White Theme) */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Sign in to your organization</Text>
-
-            {error ? (
-              <View style={styles.errorBanner}>
-                <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            {/* Workspace Selector when multiple workspaces exist for this email */}
-            {workspacesList.length > 0 && (
-              <View style={styles.workspacePickerContainer}>
-                <Text style={styles.workspacePickerTitle}>Select Workspace to Sign In:</Text>
-                {workspacesList.map((ws) => (
-                  <TouchableOpacity
-                    key={ws.slug}
-                    style={[
-                      styles.workspaceItem,
-                      orgSlug === ws.slug && styles.workspaceItemSelected,
-                    ]}
-                    onPress={() => {
-                      setOrgSlug(ws.slug);
-                      handleLogin(ws.slug);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="business" size={16} color={COLORS.primary} />
-                    <View style={{ flex: 1, marginLeft: 8 }}>
-                      <Text style={styles.workspaceItemName}>{ws.name}</Text>
-                      <Text style={styles.workspaceItemSlug}>slug: {ws.slug}</Text>
-                    </View>
-                    <Ionicons name="arrow-forward-circle" size={20} color={COLORS.primary} />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {/* Org Slug (Optional) */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. thrm-digital-marketing-agency"
-                  placeholderTextColor={COLORS.textLight}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  value={orgSlug}
-                  onChangeText={setOrgSlug}
-                />
-              </View>
-            </View>
-
-            {/* Email */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Work Email</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="recruiter@company.com"
-                  placeholderTextColor={COLORS.textLight}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  autoCorrect={false}
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
-            </View>
-
-            {/* Password */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="••••••••"
-                  placeholderTextColor={COLORS.textLight}
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                >
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={16}
-                    color={COLORS.textMuted}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Forgot Password Link */}
-            <View style={styles.forgotRow}>
-              <TouchableOpacity
-                onPress={() => {
-                  setForgotEmail(email);
-                  setForgotSlug(orgSlug);
-                  setForgotError(null);
-                  setForgotSuccess(null);
-                  setIsForgotModalVisible(true);
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotText}>Forgot password?</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Login Button */}
-            <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.disabledButton]}
-              onPress={() => handleLogin()}
-              disabled={isLoading}
-              activeOpacity={0.8}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <View style={styles.buttonInner}>
-                  <Text style={styles.loginButtonText}>Sign In</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 5 }} />
-                </View>
-              )}
-            </TouchableOpacity>
-
-            {/* Server Status Indicator (Tap to Ping / Toggle) */}
-            <View style={{ marginTop: 16, alignItems: 'center' }}>
-              <TouchableOpacity onPress={handleTestConnection} style={styles.serverInfoRow} activeOpacity={0.7}>
-                <View
-                  style={[
-                    styles.serverDot,
-                    {
-                      backgroundColor:
-                        serverStatus === 'connected'
-                          ? '#10B981'
-                          : serverStatus === 'checking'
-                          ? '#F59E0B'
-                          : '#EF4444',
-                    },
-                  ]}
-                />
-                <Text style={styles.serverInfoText} numberOfLines={1}>
-                  {serverStatus === 'checking'
-                    ? 'Testing connection...'
-                    : serverStatus === 'failed'
-                    ? `Offline (${currentServerUrl.includes('trycloudflare.com') ? 'Cloudflare Tunnel' : 'LAN'}) - Tap to ping`
-                    : `Connected: ${currentServerUrl.includes('trycloudflare.com') ? 'Cloudflare Tunnel' : 'LAN Wi-Fi'}`}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleToggleServer}
-                style={{ marginTop: 6, paddingVertical: 4, paddingHorizontal: 8 }}
-                activeOpacity={0.6}
-              >
-                <Text style={{ fontFamily: FONTS.family, fontSize: 11, color: COLORS.primary, textDecorationLine: 'underline' }}>
-                  {currentServerUrl.includes('trycloudflare.com')
-                    ? 'Switch to Local Wi-Fi (LAN)'
-                    : 'Switch to Cloudflare Global Tunnel'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Forgot Password Modal */}
-        <Modal
-          visible={isForgotModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setIsForgotModalVisible(false)}
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 16,
+              paddingBottom: Math.max(insets.bottom, 20),
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <View style={styles.modalOverlay}>
-              <TouchableOpacity
-                style={StyleSheet.absoluteFill}
-                activeOpacity={1}
-                onPress={() => setIsForgotModalVisible(false)}
+          <View style={styles.cardContainer}>
+            {/* Brand Header */}
+            <View style={styles.brandContainer}>
+              <Image
+                source={require('../../../assets/thrm-universe-logo.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
               />
-              <View style={styles.modalCard}>
-              <View style={styles.modalHeader}>
-                <View style={styles.modalHeaderIcon}>
-                  <Ionicons name="key-outline" size={20} color={COLORS.primary} />
+            </View>
+
+            {/* Form Card (Light Blue & White Theme) */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Sign in to your organization</Text>
+
+              {error ? (
+                <View style={styles.errorBanner}>
+                  <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                  <Text style={styles.errorText}>{error}</Text>
                 </View>
-                <Text style={styles.modalTitle}>Reset Password</Text>
+              ) : null}
+
+              {/* Workspace Selector when multiple workspaces exist for this email */}
+              {workspacesList.length > 0 && (
+                <View style={styles.workspacePickerContainer}>
+                  <Text style={styles.workspacePickerTitle}>Select Workspace to Sign In:</Text>
+                  {workspacesList.map((ws) => (
+                    <TouchableOpacity
+                      key={ws.slug}
+                      style={[
+                        styles.workspaceItem,
+                        orgSlug === ws.slug && styles.workspaceItemSelected,
+                      ]}
+                      onPress={() => {
+                        setOrgSlug(ws.slug);
+                        handleLogin(ws.slug);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="business" size={16} color={COLORS.primary} />
+                      <View style={{ flex: 1, marginLeft: 8 }}>
+                        <Text style={styles.workspaceItemName}>{ws.name}</Text>
+                        <Text style={styles.workspaceItemSlug}>slug: {ws.slug}</Text>
+                      </View>
+                      <Ionicons name="arrow-forward-circle" size={20} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Work Email */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Work Email</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="recruiter@company.com"
+                    placeholderTextColor={COLORS.textLight}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoCorrect={false}
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
+              </View>
+
+              {/* Password */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="lock-closed-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor={COLORS.textLight}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeButton}
+                  >
+                    <Ionicons
+                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                      size={16}
+                      color={COLORS.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Forgot Password Link */}
+              <View style={styles.forgotRow}>
                 <TouchableOpacity
-                  onPress={() => setIsForgotModalVisible(false)}
-                  style={styles.modalCloseButton}
+                  onPress={() => {
+                    setForgotEmail(email);
+                    setForgotSlug(orgSlug);
+                    setForgotError(null);
+                    setForgotSuccess(null);
+                    setIsForgotModalVisible(true);
+                  }}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="close" size={20} color={COLORS.textMuted} />
+                  <Text style={styles.forgotText}>Forgot password?</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.modalSubtitle}>
-                Enter your work email address to receive password reset instructions.
-              </Text>
-
-              {forgotSuccess ? (
-                <View style={styles.successBanner}>
-                  <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
-                  <Text style={styles.successText}>{forgotSuccess}</Text>
+              {/* Organization Slug (Optional) */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. thrm-digital-marketing-agency"
+                    placeholderTextColor={COLORS.textLight}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    value={orgSlug}
+                    onChangeText={setOrgSlug}
+                  />
                 </View>
-              ) : null}
+              </View>
 
-              {forgotError ? (
-                <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
-                  <Text style={styles.errorText}>{forgotError}</Text>
-                </View>
-              ) : null}
-
-              {!forgotSuccess ? (
-                <>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Work Email</Text>
-                    <View style={styles.inputWrapper}>
-                      <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="you@company.com"
-                        placeholderTextColor={COLORS.textLight}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        value={forgotEmail}
-                        onChangeText={setForgotEmail}
-                      />
-                    </View>
+              {/* Login Button */}
+              <TouchableOpacity
+                style={[styles.loginButton, isLoading && styles.disabledButton]}
+                onPress={() => handleLogin()}
+                disabled={isLoading}
+                activeOpacity={0.8}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <View style={styles.buttonInner}>
+                    <Text style={styles.loginButtonText}>Sign In</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 5 }} />
                   </View>
+                )}
+              </TouchableOpacity>
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
-                    <View style={styles.inputWrapper}>
-                      <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="acme-corp"
-                        placeholderTextColor={COLORS.textLight}
-                        autoCapitalize="none"
-                        value={forgotSlug}
-                        onChangeText={setForgotSlug}
-                      />
-                    </View>
-                  </View>
-
-                  <TouchableOpacity
-                    style={[styles.loginButton, forgotLoading && styles.disabledButton]}
-                    onPress={handleForgotPassword}
-                    disabled={forgotLoading}
-                  >
-                    {forgotLoading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <Text style={styles.loginButtonText}>Send Reset Link</Text>
-                    )}
-                  </TouchableOpacity>
-                </>
-              ) : (
+              {/* Register Link */}
+              <View style={styles.registerPromptRow}>
+                <Text style={styles.registerPromptText}>Don't have a workspace? </Text>
                 <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={() => setIsForgotModalVisible(false)}
+                  onPress={() => navigation?.navigate('Register')}
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.loginButtonText}>Back to Sign In</Text>
+                  <Text style={styles.registerLinkText}>Register here</Text>
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          {/* Forgot Password Modal */}
+          <Modal
+            visible={isForgotModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setIsForgotModalVisible(false)}
+          >
+            <KeyboardAvoidingView
+              style={{ flex: 1 }}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+              <View style={styles.modalOverlay}>
+                <TouchableOpacity
+                  style={StyleSheet.absoluteFill}
+                  activeOpacity={1}
+                  onPress={() => setIsForgotModalVisible(false)}
+                />
+                <View style={styles.modalCard}>
+                  <View style={styles.modalHeader}>
+                    <View style={styles.modalHeaderIcon}>
+                      <Ionicons name="key-outline" size={20} color={COLORS.primary} />
+                    </View>
+                    <Text style={styles.modalTitle}>Reset Password</Text>
+                    <TouchableOpacity
+                      onPress={() => setIsForgotModalVisible(false)}
+                      style={styles.modalCloseButton}
+                    >
+                      <Ionicons name="close" size={20} color={COLORS.textMuted} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.modalSubtitle}>
+                    Enter your work email address to receive password reset instructions.
+                  </Text>
+
+                  {forgotSuccess ? (
+                    <View style={styles.successBanner}>
+                      <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+                      <Text style={styles.successText}>{forgotSuccess}</Text>
+                    </View>
+                  ) : null}
+
+                  {forgotError ? (
+                    <View style={styles.errorBanner}>
+                      <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
+                      <Text style={styles.errorText}>{forgotError}</Text>
+                    </View>
+                  ) : null}
+
+                  {!forgotSuccess ? (
+                    <>
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Work Email</Text>
+                        <View style={styles.inputWrapper}>
+                          <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                          <TextInput
+                            style={styles.input}
+                            placeholder="you@company.com"
+                            placeholderTextColor={COLORS.textLight}
+                            autoCapitalize="none"
+                            keyboardType="email-address"
+                            value={forgotEmail}
+                            onChangeText={setForgotEmail}
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
+                        <View style={styles.inputWrapper}>
+                          <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                          <TextInput
+                            style={styles.input}
+                            placeholder="acme-corp"
+                            placeholderTextColor={COLORS.textLight}
+                            autoCapitalize="none"
+                            value={forgotSlug}
+                            onChangeText={setForgotSlug}
+                          />
+                        </View>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.loginButton, forgotLoading && styles.disabledButton]}
+                        onPress={handleForgotPassword}
+                        disabled={forgotLoading}
+                      >
+                        {forgotLoading ? (
+                          <ActivityIndicator color="#FFFFFF" size="small" />
+                        ) : (
+                          <Text style={styles.loginButtonText}>Send Reset Link</Text>
+                        )}
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.loginButton}
+                      onPress={() => setIsForgotModalVisible(false)}
+                    >
+                      <Text style={styles.loginButtonText}>Back to Sign In</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.surfaceSecondary, // Soft ice blue #F0F7FF
   },
   scrollContent: {
     flexGrow: 1,
@@ -492,44 +429,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  logoBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-    ...SHADOWS.sm,
-  },
-  brandTitle: {
-    fontFamily: FONTS.family,
-    fontSize: 22,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.3,
-  },
-  brandSubtitle: {
-    fontFamily: FONTS.family,
-    fontSize: 12.5,
-    color: COLORS.textSecondary,
-    marginTop: 3,
-    fontWeight: '400',
-    textAlign: 'center',
+  brandLogo: {
+    width: 320,
+    height: 100,
   },
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: 20,
+    backgroundColor: '#EEF4FC',
+    borderRadius: RADIUS.xl,
+    padding: 24,
     borderWidth: 1,
-    borderColor: COLORS.borderSky,
-    ...SHADOWS.md,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    ...SHADOWS.lg,
   },
   cardTitle: {
     fontFamily: FONTS.family,
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
     marginBottom: 16,
   },
   errorBanner: {
@@ -563,11 +479,11 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceSecondary,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: 10,
+    borderColor: '#D4E0EE',
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 12,
   },
   inputIcon: {
     marginRight: 6,
@@ -583,7 +499,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   loginButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#3B82F6',
     height: 44,
     borderRadius: RADIUS.sm,
     alignItems: 'center',
@@ -616,7 +532,7 @@ const styles = StyleSheet.create({
   demoButtonText: {
     fontFamily: FONTS.family,
     fontSize: 11.5,
-    color: COLORS.primary,
+    color: '#3B82F6',
     fontWeight: '500',
   },
   forgotRow: {
@@ -626,8 +542,25 @@ const styles = StyleSheet.create({
   forgotText: {
     fontFamily: FONTS.family,
     fontSize: 12.5,
-    color: COLORS.primary,
+    color: '#3B82F6',
     fontWeight: '500',
+  },
+  registerPromptRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+  },
+  registerPromptText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    color: '#64748B',
+  },
+  registerLinkText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#3B82F6',
   },
   modalOverlay: {
     flex: 1,

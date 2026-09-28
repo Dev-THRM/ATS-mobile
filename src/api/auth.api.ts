@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import {
   AuthResponse,
   LoginCredentials,
+  RegisterPayload,
   UserSummary,
   OrganizationMember,
   OrganizationRole,
@@ -10,6 +11,11 @@ import {
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const { data } = await apiClient.post<AuthResponse>('/auth/login', credentials);
+    return data;
+  },
+
+  register: async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const { data } = await apiClient.post<AuthResponse>('/auth/register?plan=ATS', payload);
     return data;
   },
 

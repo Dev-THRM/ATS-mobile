@@ -36,6 +36,18 @@ export interface LoginCredentials {
   organizationSlug?: string;
 }
 
+export interface RegisterPayload {
+  organizationName: string;
+  organizationSlug: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  sourcingChannels?: string[];
+  plan?: string;
+}
+
 export interface OrganizationRole {
   id: string;
   name: string;

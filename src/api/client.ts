@@ -7,7 +7,6 @@ const ACCESS_TOKEN_KEY = 'ats_access_token';
 const REFRESH_TOKEN_KEY = 'ats_refresh_token';
 
 export const PROD_API_URL = 'https://api.thrmuniverse.in/api/v1';
-export const CLOUDFLARE_TUNNEL_URL = 'https://hey-qld-declared-switching.trycloudflare.com';
 export const LOCAL_LAN_URL = 'http://192.168.1.35:3000/api/v1';
 
 // Automatically resolve backend host based on platform and Expo environment
@@ -17,23 +16,7 @@ const getBaseUrl = (): string => {
     return raw.endsWith('/api/v1') ? raw : `${raw}/api/v1`;
   }
 
-  // If running via Expo Go or Dev Client on a physical phone, resolve dev machine's LAN IP
-  const hostUri =
-    Constants.expoConfig?.hostUri ||
-    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ||
-    (Constants as any)?.manifest?.debuggerHost;
-
-  if (hostUri) {
-    const ip = hostUri.split(':')[0];
-    if (ip && ip.includes('exp.direct')) {
-      return PROD_API_URL;
-    }
-    if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
-      return `http://${ip}:3000/api/v1`;
-    }
-  }
-
-  // Fallback to active hosted production backend URL
+  // Default to live production backend URL
   return PROD_API_URL;
 };
 

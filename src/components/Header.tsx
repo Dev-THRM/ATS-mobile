@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const [logoRatio, setLogoRatio] = useState<number>(1.3);
 
   const getInitials = (name?: string) => {
     if (!name) return 'HR';
@@ -43,6 +44,20 @@ export const Header: React.FC<HeaderProps> = ({
   const orgName = user?.organization?.name || 'Talent Portal';
   const logoUri = user?.organization?.logoUrl ? getLogoUri(user.organization.logoUrl) : null;
 
+  useEffect(() => {
+    if (logoUri) {
+      Image.getSize(
+        logoUri,
+        (w, h) => {
+          if (w && h > 0) {
+            setLogoRatio(w / h);
+          }
+        },
+        () => {}
+      );
+    }
+  }, [logoUri]);
+
   const topPadding = Math.max(insets.top, Platform.OS === 'ios' ? 47 : 16) + 6;
 
   return (
@@ -54,7 +69,12 @@ export const Header: React.FC<HeaderProps> = ({
             <View style={styles.logoBadgeContainer}>
               <Image
                 source={{ uri: logoUri }}
-                style={styles.logoImg}
+                style={[
+                  styles.logoImg,
+                  {
+                    aspectRatio: logoRatio,
+                  },
+                ]}
                 resizeMode="contain"
               />
             </View>
@@ -114,6 +134,7 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     flex: 1,
     marginRight: 10,
   },
@@ -122,18 +143,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flexShrink: 1,
+    justifyContent: 'flex-start',
   },
   logoBadgeContainer: {
-    height: 38,
-    minWidth: 40,
-    maxWidth: 180,
+    height: 52,
     alignItems: 'flex-start',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
   logoImg: {
-    height: 36,
-    width: 150,
+    height: 50,
+    maxHeight: 56,
+    maxWidth: 220,
+    alignSelf: 'flex-start',
   },
   fallbackAvatar: {
     width: 36,
