@@ -52,16 +52,26 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
     setIsSubmitting(true);
     try {
       await atsApi.submitInterviewFeedback(interview.id, {
+        rating,
+        notes: notes.trim(),
         feedbackRating: rating,
         feedbackNotes: notes.trim(),
       });
       queryClient.invalidateQueries({ queryKey: ['ats-interviews'] });
       queryClient.invalidateQueries({ queryKey: ['ats-dashboard'] });
-      Alert.alert('Saved', 'Scorecard evaluation submitted.');
-      if (onSuccess) onSuccess();
-      onClose();
+      Alert.alert('Success', 'Scorecard evaluation submitted successfully.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (onSuccess) onSuccess();
+            onClose();
+          },
+        },
+      ]);
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to submit scorecard.');
+      const raw = err.response?.data?.message || err.message || 'Failed to submit scorecard.';
+      const safe = Array.isArray(raw) ? raw.join('\n') : String(raw);
+      Alert.alert('Submission Error', safe);
     } finally {
       setIsSubmitting(false);
     }
@@ -87,13 +97,19 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
   const currentVerdict = getRatingLabel(rating);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.overlay}>
-          <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <View style={styles.overlay}>
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.content}>
             <View style={styles.header}>
               <View>
@@ -141,11 +157,13 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
               <TextInput
                 style={styles.notesInput}
                 placeholder="Document code review, architecture insights, problem-solving depth, and areas for growth..."
-                placeholderTextColor={COLORS.textLight}
+                placeholderTextColor="#94A3B8"
                 multiline
                 numberOfLines={4}
                 value={notes}
                 onChangeText={setNotes}
+                selectionColor={COLORS.primary}
+                cursorColor={COLORS.primary}
               />
             </ScrollView>
 
@@ -168,30 +186,32 @@ export const SubmitFeedbackModal: React.FC<SubmitFeedbackModalProps> = ({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  keyboardAvoid: {
-    flex: 1,
-  },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
+  },
+  keyboardAvoid: {
+    width: '100%',
+    justifyContent: 'flex-end',
   },
   content: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
     padding: 20,
-    maxHeight: '85%',
+    maxHeight: '90%',
+    ...SHADOWS.lg,
   },
   scrollBody: {
     paddingBottom: 16,
@@ -205,24 +225,24 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: FONTS.family,
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   candidateName: {
     fontFamily: FONTS.family,
     fontSize: 12,
     color: COLORS.primary,
-    fontWeight: '500',
+    fontWeight: '600',
     marginTop: 2,
   },
   closeBtn: {
-    padding: 2,
+    padding: 4,
   },
   label: {
     fontFamily: FONTS.family,
     fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.textPrimary,
+    fontWeight: '600',
+    color: '#334155',
     marginBottom: 6,
   },
   starPickerRow: {
@@ -231,11 +251,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   starTouchable: {
-    padding: 4,
+    padding: 6,
   },
   verdictBadge: {
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     borderRadius: RADIUS.sm,
     alignItems: 'center',
     marginBottom: 14,
@@ -246,39 +266,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   notesInput: {
-    fontFamily: FONTS.family,
-    backgroundColor: COLORS.surfaceSecondary,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    fontFamily: FONTS.input,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
     borderRadius: RADIUS.sm,
-    padding: 10,
-    fontSize: 13,
-    color: COLORS.textPrimary,
+    padding: 12,
+    fontSize: 14,
+    color: '#0F172A',
     textAlignVertical: 'top',
-    height: 90,
+    minHeight: 100,
     marginBottom: 16,
   },
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingTop: 4,
   },
   cancelBtn: {
     flex: 1,
-    padding: 12,
+    paddingVertical: 12,
     borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.surfaceSecondary,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   cancelBtnText: {
     fontFamily: FONTS.family,
     fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
+    fontWeight: '600',
+    color: '#475569',
   },
   submitBtn: {
     flex: 2,
-    padding: 12,
+    paddingVertical: 12,
     borderRadius: RADIUS.sm,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
@@ -286,7 +307,7 @@ const styles = StyleSheet.create({
   submitBtnText: {
     fontFamily: FONTS.family,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
 });

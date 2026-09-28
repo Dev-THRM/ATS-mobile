@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    fontFamily: FONTS.family,
+    fontFamily: FONTS.input,
     fontSize: 13,
     fontWeight: '500',
     color: '#0F172A',

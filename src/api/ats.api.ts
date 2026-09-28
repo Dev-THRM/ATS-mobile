@@ -149,7 +149,12 @@ export const atsApi = {
 
   submitInterviewFeedback: async (
     interviewId: string,
-    payload: { feedbackRating: number; feedbackNotes: string },
+    payload: {
+      rating?: number;
+      notes?: string;
+      feedbackRating?: number;
+      feedbackNotes?: string;
+    },
   ): Promise<Interview> => {
     const { data } = await apiClient.post(`/ats/interviews/${interviewId}/feedback`, payload);
     return data?.interview || data;

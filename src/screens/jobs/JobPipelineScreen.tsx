@@ -1952,14 +1952,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalInput: {
-    fontFamily: FONTS.family,
-    backgroundColor: COLORS.surfaceSecondary,
+    fontFamily: FONTS.input,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#CBD5E1',
     borderRadius: RADIUS.sm,
     padding: 8,
     fontSize: 12.5,
-    color: COLORS.textPrimary,
+    color: '#0F172A',
     textAlignVertical: 'top',
   },
   modalFooter: {
@@ -2017,9 +2017,9 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: 38,
-    fontFamily: FONTS.family,
+    fontFamily: FONTS.input,
     fontSize: 12.5,
-    color: COLORS.textPrimary,
+    color: '#0F172A',
   },
   initialStageRow: {
     marginBottom: 10,

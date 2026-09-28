@@ -489,11 +489,11 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   input: {
-    fontFamily: FONTS.family,
+    fontFamily: FONTS.input,
     flex: 1,
     height: 42,
     fontSize: 13.5,
-    color: COLORS.textPrimary,
+    color: '#0F172A',
   },
   eyeButton: {
     padding: 6,

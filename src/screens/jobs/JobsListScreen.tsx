@@ -484,10 +484,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   searchInput: {
-    fontFamily: FONTS.family,
+    fontFamily: FONTS.input,
     flex: 1,
     fontSize: 13,
-    color: COLORS.textPrimary,
+    color: '#0F172A',
   },
   createButton: {
     flexDirection: 'row',
@@ -700,15 +700,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   modalInput: {
-    fontFamily: FONTS.family,
-    backgroundColor: COLORS.surfaceSecondary,
+    fontFamily: FONTS.input,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#CBD5E1',
     borderRadius: RADIUS.sm,
     paddingHorizontal: 10,
     height: 40,
     fontSize: 13,
-    color: COLORS.textPrimary,
+    color: '#0F172A',
   },
   textArea: {
     height: 80,

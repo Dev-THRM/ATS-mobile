@@ -58,6 +58,13 @@ export const FONTS = {
     android: 'PlusJakartaSans',
     default: 'PlusJakartaSans',
   }),
+  // Custom fonts on Android TextInput trigger a native EditText rendering bug where typed text is invisible.
+  // Using system font on Android ensures typed text is always crisp, opaque, and visible.
+  input: Platform.select({
+    ios: 'Inter',
+    android: undefined,
+    default: undefined,
+  }),
 };
 
 export const SHADOWS = {
