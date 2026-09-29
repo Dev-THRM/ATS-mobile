@@ -449,12 +449,12 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
                   </View>
 
                   <View style={styles.brandHeroMeta}>
-                    <Text style={styles.brandHeroName} numberOfLines={2}>
+                    <Text style={styles.brandHeroName} numberOfLines={3}>
                       {name || 'Company Name'}
                     </Text>
                     <View style={styles.subdomainTag}>
                       <Ionicons name="link-outline" size={11} color="#0369A1" />
-                      <Text style={styles.subdomainText} numberOfLines={1} ellipsizeMode="middle">
+                      <Text style={styles.subdomainText} numberOfLines={1} ellipsizeMode="tail">
                         {slug ? `${slug}.ats.io` : 'workspace-slug'}
                       </Text>
                     </View>
@@ -473,12 +473,12 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
                       <ActivityIndicator color="#2563EB" size="small" />
                     ) : (
                       <>
-                        <Ionicons name="cloud-upload-outline" size={14} color="#2563EB" />
+                        <Ionicons name="cloud-upload-outline" size={15} color="#2563EB" />
                         <Text style={styles.uploadLogoText}>Change Company Logo</Text>
                       </>
                     )}
                   </TouchableOpacity>
-                  <Text style={styles.uploadHintText}>PNG, JPG or SVG (Max 5MB)</Text>
+                  <Text style={styles.uploadHintText}>Supported formats: PNG, JPG, SVG • Max 5MB</Text>
                 </View>
               </View>
 
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 40,
+    paddingBottom: 90,
   },
   sectionCard: {
     backgroundColor: '#FFFFFF',
@@ -758,16 +758,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logoContainer: {
-    width: 80,
-    height: 60,
-    borderRadius: 12,
+    width: 68,
+    height: 68,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: 4,
+    padding: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -785,13 +785,14 @@ const styles = StyleSheet.create({
   brandHeroMeta: {
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
   },
   brandHeroName: {
     fontFamily: FONTS.family,
     fontSize: 16,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 21,
+    lineHeight: 22,
     letterSpacing: -0.3,
   },
   subdomainTag: {
@@ -799,7 +800,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#E0F2FE',
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     alignSelf: 'flex-start',
@@ -814,38 +815,37 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   brandHeroBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: 8,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
-    paddingTop: 10,
-    marginTop: 10,
+    paddingTop: 12,
+    marginTop: 12,
+    gap: 6,
+    alignItems: 'center',
   },
   uploadLogoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 7,
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#BFDBFE',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    width: '100%',
   },
   uploadLogoText: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
-    fontWeight: '600',
+    fontSize: 12.5,
+    fontWeight: '700',
     color: '#2563EB',
   },
   uploadHintText: {
     fontFamily: FONTS.family,
-    fontSize: 10,
+    fontSize: 10.5,
     color: '#94A3B8',
-    flexShrink: 1,
+    textAlign: 'center',
   },
   formContainer: {
     gap: 14,
@@ -1091,6 +1091,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     paddingVertical: 8,
+    paddingHorizontal: 2,
     borderRadius: 10,
   },
   topTabBtnActive: {
@@ -1098,7 +1099,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
   },
   topTabText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#64748B',
   },
@@ -1108,14 +1109,14 @@ const styles = StyleSheet.create({
   },
   topTabBadge: {
     backgroundColor: '#EFF6FF',
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#BFDBFE',
   },
   topTabBadgeText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
     color: '#2563EB',
   },
