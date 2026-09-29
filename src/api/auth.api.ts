@@ -77,6 +77,14 @@ export const authApi = {
     return data;
   },
 
+  changePassword: async (payload: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<{ message: string }> => {
+    const { data } = await apiClient.post<{ message: string }>('/auth/change-password', payload);
+    return data;
+  },
+
   getOrganizationMembers: async (): Promise<OrganizationMember[]> => {
     const { data } = await apiClient.get<OrganizationMember[]>('/auth/organization/members');
     return data;

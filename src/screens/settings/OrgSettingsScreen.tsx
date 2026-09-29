@@ -49,7 +49,58 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
     queryFn: authApi.getOrganization,
   });
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'team'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'team' | 'security'>('profile');
+
+  // Change Password State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    if (!currentPassword) {
+      setPasswordError('Please enter your current password');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError('New password cannot be identical to current password');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await authApi.changePassword({
+        currentPassword,
+        newPassword,
+      });
+      setPasswordSuccess(res.message || 'Password changed successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      Alert.alert('Success', 'Your password has been changed successfully.');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Failed to change password';
+      setPasswordError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   const { data: members = [] } = useQuery({
     queryKey: ['organization-members'],
@@ -202,6 +253,26 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
             </View>
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.topTabBtn, activeTab === 'security' && styles.topTabBtnActive]}
+          onPress={() => setActiveTab('security')}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={15}
+            color={activeTab === 'security' ? '#2563EB' : '#64748B'}
+          />
+          <Text
+            style={[
+              styles.topTabText,
+              activeTab === 'security' && styles.topTabTextActive,
+            ]}
+          >
+            Security
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -217,6 +288,130 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
       >
         {activeTab === 'team' ? (
           <TeamSettingsTab />
+        ) : activeTab === 'security' ? (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionIconBadge}>
+                <Ionicons name="key-outline" size={17} color="#2563EB" />
+              </View>
+              <View>
+                <Text style={styles.sectionTitle}>Account Security</Text>
+                <Text style={styles.sectionSubtitle}>
+                  Update your account password
+                </Text>
+              </View>
+            </View>
+
+            {passwordSuccess ? (
+              <View style={styles.successBannerBox}>
+                <Ionicons name="checkmark-circle" size={18} color="#059669" />
+                <Text style={styles.successBannerText}>{passwordSuccess}</Text>
+              </View>
+            ) : null}
+
+            {passwordError ? (
+              <View style={styles.errorBannerBox}>
+                <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                <Text style={styles.errorBannerText}>{passwordError}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.formContainer}>
+              {/* Current Password */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Current Password *</Text>
+                <View style={styles.passwordInputWrapper}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Enter current password"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry={!showCurrent}
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowCurrent(!showCurrent)}
+                    style={styles.eyeBtn}
+                  >
+                    <Ionicons
+                      name={showCurrent ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* New Password */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>New Password (min 6 chars) *</Text>
+                <View style={styles.passwordInputWrapper}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Enter new password"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry={!showNew}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowNew(!showNew)}
+                    style={styles.eyeBtn}
+                  >
+                    <Ionicons
+                      name={showNew ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Confirm New Password */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Confirm New Password *</Text>
+                <View style={styles.passwordInputWrapper}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    placeholder="Re-enter new password"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry={!showConfirm}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirm(!showConfirm)}
+                    style={styles.eyeBtn}
+                  >
+                    <Ionicons
+                      name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, isChangingPassword && { opacity: 0.6 }]}
+                onPress={handleChangePassword}
+                disabled={isChangingPassword}
+                activeOpacity={0.8}
+              >
+                {isChangingPassword ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="shield-checkmark" size={16} color="#FFFFFF" />
+                    <Text style={styles.saveBtnText}>Update Password</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
         ) : (
           <>
             {/* 1. Organization Identity Card */}
@@ -910,5 +1105,58 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#2563EB',
+  },
+  passwordInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+  },
+  passwordInput: {
+    flex: 1,
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    color: '#0F172A',
+    paddingVertical: 10,
+  },
+  eyeBtn: {
+    padding: 6,
+  },
+  successBannerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  successBannerText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065F46',
+    flex: 1,
+  },
+  errorBannerBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  errorBannerText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#991B1B',
+    flex: 1,
   },
 });
