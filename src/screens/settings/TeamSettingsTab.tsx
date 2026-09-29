@@ -456,16 +456,14 @@ export const TeamSettingsTab: React.FC = () => {
                   {isSuperAdminOrAdmin && (
                     <View style={styles.memberActionsRow}>
                       {/* Edit Button — always shown for self or manageable members */}
-                      {(isSelf || !isSuperAdmin) && (
-                        <TouchableOpacity
-                          style={isSelf ? styles.editBtnSelf : styles.editBtn}
-                          onPress={() => handleOpenEdit(member)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="pencil" size={13} color="#2563EB" />
-                          <Text style={styles.editBtnText}>{isSelf ? 'Edit Profile' : 'Edit'}</Text>
-                        </TouchableOpacity>
-                      )}
+                      <TouchableOpacity
+                        style={isSelf ? styles.editBtnSelf : styles.editBtn}
+                        onPress={() => handleOpenEdit(member)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="pencil" size={13} color="#2563EB" />
+                        <Text style={styles.editBtnText}>{isSelf ? 'Edit Profile' : 'Edit'}</Text>
+                      </TouchableOpacity>
 
                       {/* Delete Button — only for non-self, non-super-admin */}
                       {!isSelf && !isSuperAdmin && (
