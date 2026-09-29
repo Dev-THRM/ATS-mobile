@@ -216,7 +216,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
         >
           <Ionicons
             name="business-outline"
-            size={15}
+            size={14}
             color={activeTab === 'profile' ? '#2563EB' : '#64748B'}
           />
           <Text
@@ -224,8 +224,9 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
               styles.topTabText,
               activeTab === 'profile' && styles.topTabTextActive,
             ]}
+            numberOfLines={1}
           >
-            Company Profile
+            Profile
           </Text>
         </TouchableOpacity>
 
@@ -236,7 +237,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
         >
           <Ionicons
             name="people-outline"
-            size={15}
+            size={14}
             color={activeTab === 'team' ? '#2563EB' : '#64748B'}
           />
           <Text
@@ -244,8 +245,9 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
               styles.topTabText,
               activeTab === 'team' && styles.topTabTextActive,
             ]}
+            numberOfLines={1}
           >
-            Team Access
+            Team
           </Text>
           {members.length > 0 && (
             <View style={styles.topTabBadge}>
@@ -261,7 +263,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
         >
           <Ionicons
             name="shield-checkmark-outline"
-            size={15}
+            size={14}
             color={activeTab === 'security' ? '#2563EB' : '#64748B'}
           />
           <Text
@@ -269,6 +271,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
               styles.topTabText,
               activeTab === 'security' && styles.topTabTextActive,
             ]}
+            numberOfLines={1}
           >
             Security
           </Text>
@@ -416,68 +419,68 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
           <>
             {/* 1. Organization Identity Card */}
             <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconBadge}>
-              <Ionicons name="business" size={17} color="#2563EB" />
-            </View>
-            <View>
-              <Text style={styles.sectionTitle}>Organization Identity</Text>
-              <Text style={styles.sectionSubtitle}>
-                Brand logo, company name and workspace subdomain
-              </Text>
-            </View>
-          </View>
-
-          {/* Logo Showcase & Company Header */}
-          <View style={styles.brandHeroCard}>
-            <View style={styles.brandHeroTopRow}>
-              <View style={styles.logoContainer}>
-                {currentLogoUri ? (
-                  <Image
-                    source={{ uri: currentLogoUri }}
-                    style={styles.logoImage}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <View style={styles.fallbackLogoBox}>
-                    <Ionicons name="business" size={28} color="#2563EB" />
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.brandHeroMeta}>
-                <Text style={styles.brandHeroName} numberOfLines={2}>
-                  {name || 'Company Name'}
-                </Text>
-                <View style={styles.subdomainTag}>
-                  <Ionicons name="link-outline" size={12} color="#0369A1" />
-                  <Text style={styles.subdomainText} numberOfLines={1}>
-                    {slug ? `${slug}.ats.io` : 'workspace-slug'}
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionIconBadge}>
+                  <Ionicons name="business" size={17} color="#2563EB" />
+                </View>
+                <View style={styles.sectionTitleContainer}>
+                  <Text style={styles.sectionTitle}>Organization Identity</Text>
+                  <Text style={styles.sectionSubtitle}>
+                    Brand logo, company name and workspace subdomain
                   </Text>
                 </View>
               </View>
-            </View>
 
-            {/* Logo Upload Button */}
-            <View style={styles.brandHeroBottomRow}>
-              <TouchableOpacity
-                style={styles.uploadLogoBtn}
-                onPress={handlePickLogo}
-                disabled={isUploadingLogo}
-                activeOpacity={0.7}
-              >
-                {isUploadingLogo ? (
-                  <ActivityIndicator color="#2563EB" size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="cloud-upload-outline" size={15} color="#2563EB" />
-                    <Text style={styles.uploadLogoText}>Change Company Logo</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              <Text style={styles.uploadHintText}>PNG, JPG or SVG (Max 5MB)</Text>
-            </View>
-          </View>
+              {/* Logo Showcase & Company Header */}
+              <View style={styles.brandHeroCard}>
+                <View style={styles.brandHeroTopRow}>
+                  <View style={styles.logoContainer}>
+                    {currentLogoUri ? (
+                      <Image
+                        source={{ uri: currentLogoUri }}
+                        style={styles.logoImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <View style={styles.fallbackLogoBox}>
+                        <Ionicons name="business" size={24} color="#2563EB" />
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.brandHeroMeta}>
+                    <Text style={styles.brandHeroName} numberOfLines={2}>
+                      {name || 'Company Name'}
+                    </Text>
+                    <View style={styles.subdomainTag}>
+                      <Ionicons name="link-outline" size={11} color="#0369A1" />
+                      <Text style={styles.subdomainText} numberOfLines={1} ellipsizeMode="middle">
+                        {slug ? `${slug}.ats.io` : 'workspace-slug'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Logo Upload Button */}
+                <View style={styles.brandHeroBottomRow}>
+                  <TouchableOpacity
+                    style={styles.uploadLogoBtn}
+                    onPress={handlePickLogo}
+                    disabled={isUploadingLogo}
+                    activeOpacity={0.7}
+                  >
+                    {isUploadingLogo ? (
+                      <ActivityIndicator color="#2563EB" size="small" />
+                    ) : (
+                      <>
+                        <Ionicons name="cloud-upload-outline" size={14} color="#2563EB" />
+                        <Text style={styles.uploadLogoText}>Change Company Logo</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={styles.uploadHintText}>PNG, JPG or SVG (Max 5MB)</Text>
+                </View>
+              </View>
 
           {/* Form Inputs */}
           <View style={styles.formContainer}>
@@ -579,7 +582,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
             <View style={[styles.sectionIconBadge, { backgroundColor: '#ECFDF5' }]}>
               <Ionicons name="compass-outline" size={17} color="#059669" />
             </View>
-            <View>
+            <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>Public Career Portal</Text>
               <Text style={styles.sectionSubtitle}>
                 Candidates can browse jobs & apply directly online
@@ -615,7 +618,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
             <View style={[styles.sectionIconBadge, { backgroundColor: '#F5F3FF' }]}>
               <Ionicons name="bar-chart-outline" size={17} color="#7C3AED" />
             </View>
-            <View>
+            <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>Workspace Metrics</Text>
               <Text style={styles.sectionSubtitle}>Active pipeline and talent pool volume</Text>
             </View>
@@ -648,7 +651,7 @@ export const OrgSettingsScreen: React.FC<{ navigation: any }> = ({ navigation })
             <View style={[styles.sectionIconBadge, { backgroundColor: '#F1F5F9' }]}>
               <Ionicons name="person-circle-outline" size={18} color="#475569" />
             </View>
-            <View>
+            <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>Recruiter Account</Text>
               <Text style={styles.sectionSubtitle}>Current logged in session</Text>
             </View>
@@ -701,7 +704,7 @@ const styles = StyleSheet.create({
   sectionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    padding: 18,
+    padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -714,8 +717,8 @@ const styles = StyleSheet.create({
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 14,
   },
   sectionIconBadge: {
     width: 36,
@@ -725,42 +728,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  sectionTitleContainer: {
+    flex: 1,
+    minWidth: 0,
+  },
   sectionTitle: {
     fontFamily: FONTS.family,
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: '700',
     color: '#0F172A',
   },
   sectionSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#64748B',
     marginTop: 1,
   },
   brandHeroCard: {
     backgroundColor: '#F8FAFC',
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 14,
+    padding: 12,
     marginBottom: 16,
   },
   brandHeroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
   },
   logoContainer: {
-    width: 110,
-    height: 75,
-    borderRadius: 14,
+    width: 80,
+    height: 60,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: 6,
+    padding: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -777,13 +784,14 @@ const styles = StyleSheet.create({
   },
   brandHeroMeta: {
     flex: 1,
+    minWidth: 0,
   },
   brandHeroName: {
     fontFamily: FONTS.family,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 23,
+    lineHeight: 21,
     letterSpacing: -0.3,
   },
   subdomainTag: {
@@ -791,26 +799,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#E0F2FE',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
     alignSelf: 'flex-start',
-    marginTop: 6,
+    marginTop: 5,
+    maxWidth: '100%',
   },
   subdomainText: {
     fontFamily: FONTS.family,
     fontSize: 11,
     fontWeight: '600',
     color: '#0369A1',
+    flexShrink: 1,
   },
   brandHeroBottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
-    paddingTop: 12,
-    marginTop: 12,
+    paddingTop: 10,
+    marginTop: 10,
   },
   uploadLogoBtn: {
     flexDirection: 'row',
@@ -819,20 +831,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#BFDBFE',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
   uploadLogoText: {
     fontFamily: FONTS.family,
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#2563EB',
   },
   uploadHintText: {
     fontFamily: FONTS.family,
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#94A3B8',
+    flexShrink: 1,
   },
   formContainer: {
     gap: 14,
@@ -872,9 +885,9 @@ const styles = StyleSheet.create({
   },
   helperRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 5,
-    marginTop: 2,
+    marginTop: 3,
     paddingHorizontal: 2,
   },
   helperText: {
@@ -1064,7 +1077,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#F1F5F9',
     borderRadius: 14,
-    padding: 4,
+    padding: 3,
     marginHorizontal: 16,
     marginTop: 10,
     marginBottom: 4,
@@ -1076,8 +1089,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 9,
+    gap: 4,
+    paddingVertical: 8,
     borderRadius: 10,
   },
   topTabBtnActive: {
@@ -1085,7 +1098,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
   },
   topTabText: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
   },
