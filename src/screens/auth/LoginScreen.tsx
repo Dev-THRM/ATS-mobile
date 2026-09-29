@@ -410,7 +410,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#2846C3',
   },
   container: {
     flex: 1,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   loginButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#2846C3',
     height: 44,
     borderRadius: RADIUS.sm,
     alignItems: 'center',
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   demoButtonText: {
     fontFamily: FONTS.family,
     fontSize: 11.5,
-    color: '#3B82F6',
+    color: '#2846C3',
     fontWeight: '500',
   },
   forgotRow: {
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   forgotText: {
     fontFamily: FONTS.family,
     fontSize: 12.5,
-    color: '#3B82F6',
+    color: '#2846C3',
     fontWeight: '500',
   },
   registerPromptRow: {
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 13,
     fontWeight: '700',
-    color: '#3B82F6',
+    color: '#2846C3',
   },
   modalOverlay: {
     flex: 1,
