@@ -1035,9 +1035,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerLogo: {
-    width: 130,
-    height: 36,
-    opacity: 0.9,
+    width: 145,
+    height: 42,
   },
   footerDescription: {
     fontFamily: FONTS.family,
