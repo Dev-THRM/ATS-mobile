@@ -142,6 +142,16 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.cardContainer}>
+            {/* Back to Universe */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.navigate('Landing')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={16} color={COLORS.primary} />
+              <Text style={styles.backButtonText}>THRM Universe</Text>
+            </TouchableOpacity>
+
             {/* Brand Header */}
             <View style={styles.brandContainer}>
               <Image
@@ -424,6 +434,25 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 420,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.full,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  backButtonText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.primary,
   },
   brandContainer: {
     alignItems: 'center',
