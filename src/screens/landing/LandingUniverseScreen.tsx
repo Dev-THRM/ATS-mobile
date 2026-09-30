@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const cardsTriggered = useRef(false);
+  const backboneTriggered = useRef(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -42,6 +43,10 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
   const card2Anim = useRef(new Animated.Value(100)).current;
   const card3Anim = useRef(new Animated.Value(120)).current;
   const bottomBarAnim = useRef(new Animated.Value(80)).current;
+
+  // Backbone entrance animation (triggered on scroll)
+  const backboneOpacityAnim = useRef(new Animated.Value(0)).current;
+  const backboneSlideAnim = useRef(new Animated.Value(60)).current;
 
   useEffect(() => {
     // Entrance for Hero
@@ -124,15 +129,38 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
     ]).start();
   };
 
+  const triggerBackboneAnimation = () => {
+    if (backboneTriggered.current) return;
+    backboneTriggered.current = true;
+
+    Animated.parallel([
+      Animated.timing(backboneOpacityAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backboneSlideAnim, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     if (offsetY > 30) {
       triggerCardsAnimation();
     }
+    if (offsetY > 180) {
+      triggerBackboneAnimation();
+    }
   };
 
   const scrollToCards = () => {
     triggerCardsAnimation();
+    triggerBackboneAnimation();
     scrollViewRef.current?.scrollTo({
       y: height - 160,
       animated: true,
@@ -175,7 +203,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Full-Height Initial Hero Viewport (ONLY this is visible on load) */}
+        {/* SECTION 1: Full-Height Initial Hero Viewport (ONLY this is visible on load) */}
         <Animated.View
           style={[
             styles.heroSection,
@@ -243,7 +271,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Product Cards Container (Animates in on scroll) */}
+        {/* SECTION 2: Product Cards Container (Equal spacing, animates in on scroll) */}
         <View style={styles.cardsContainer}>
           {/* Card 1: THRM ATS */}
           <Animated.View
@@ -536,8 +564,16 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           </Animated.View>
         </View>
 
-        {/* Enterprise Backbone Pillars (Increased Typography) */}
-        <View style={styles.backboneCard}>
+        {/* SECTION 3: Enterprise Backbone Pillars (Equal spacing, animates in on scroll) */}
+        <Animated.View
+          style={[
+            styles.backboneCard,
+            {
+              opacity: backboneOpacityAnim,
+              transform: [{ translateY: backboneSlideAnim }],
+            },
+          ]}
+        >
           <View style={styles.backboneHeader}>
             <Text style={styles.backboneTitle}>Built on a Shared Enterprise Backbone</Text>
             <Text style={styles.backboneSubtitle}>
@@ -586,9 +622,9 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
               </Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Production-Grade Mobile Footer */}
+        {/* SECTION 4: Production-Grade Mobile Footer (Equal spacing) */}
         <View style={styles.footerSection}>
           <Image
             source={require('../../../assets/thrm-universe-logo.png')}
@@ -767,7 +803,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     gap: 20,
-    paddingTop: 16,
+    marginTop: 36,
   },
   productCard: {
     backgroundColor: '#FFFFFF',
@@ -931,7 +967,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   backboneCard: {
-    marginTop: 26,
+    marginTop: 36,
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
     padding: 20,
@@ -992,8 +1028,8 @@ const styles = StyleSheet.create({
   },
   footerSection: {
     alignItems: 'center',
-    marginTop: 20,
-    paddingTop: 20,
+    marginTop: 36,
+    paddingTop: 24,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
     gap: 8,
