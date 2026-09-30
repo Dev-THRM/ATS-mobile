@@ -584,7 +584,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           <View style={styles.pillarsGrid}>
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="lock-closed" size={22} color={COLORS.primary} />
+                <Ionicons name="lock-closed" size={20} color={COLORS.primary} />
               </View>
               <Text style={styles.pillarTitle}>Universal Identity</Text>
               <Text style={styles.pillarDesc}>
@@ -594,7 +594,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="hardware-chip" size={22} color={COLORS.primary} />
+                <Ionicons name="hardware-chip" size={20} color={COLORS.primary} />
               </View>
               <Text style={styles.pillarTitle}>AI Engine Integration</Text>
               <Text style={styles.pillarDesc}>
@@ -604,7 +604,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="shield-checkmark" size={22} color={COLORS.primary} />
+                <Ionicons name="shield-checkmark" size={20} color={COLORS.primary} />
               </View>
               <Text style={styles.pillarTitle}>Isolated Security</Text>
               <Text style={styles.pillarDesc}>
@@ -614,7 +614,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="phone-portrait" size={22} color={COLORS.primary} />
+                <Ionicons name="phone-portrait" size={20} color={COLORS.primary} />
               </View>
               <Text style={styles.pillarTitle}>Mobile Companion</Text>
               <Text style={styles.pillarDesc}>
@@ -970,18 +970,18 @@ const styles = StyleSheet.create({
     marginTop: 36,
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...SHADOWS.sm,
   },
   backboneHeader: {
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   backboneTitle: {
     fontFamily: FONTS.heading,
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
@@ -989,42 +989,46 @@ const styles = StyleSheet.create({
   },
   backboneSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 13,
+    fontSize: 12.5,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 17,
   },
   pillarsGrid: {
-    gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
   },
   pillarTile: {
+    width: (width - 74) / 2,
     backgroundColor: '#F8FAFC',
     borderRadius: RADIUS.lg,
-    padding: 16,
+    padding: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   pillarIconCircle: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: RADIUS.sm,
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   pillarTitle: {
     fontFamily: FONTS.family,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 4,
   },
   pillarDesc: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
-    color: '#475569',
-    lineHeight: 18,
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15.5,
   },
   footerSection: {
     alignItems: 'center',
