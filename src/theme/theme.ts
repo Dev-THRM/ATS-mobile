@@ -1,16 +1,16 @@
 import { Platform } from 'react-native';
 
 export const COLORS = {
-  // Light Blue & Grey White Primary Brand
-  primary: '#0284C7', // Sky 600
-  primaryHover: '#0369A1', // Sky 700
-  primaryLight: '#E0F2FE', // Sky 100
-  primaryLighter: '#F0F9FF', // Sky 50
-  primaryDark: '#075985', // Sky 800
+  // THRM Universe Primary Brand (#1E51DA)
+  primary: '#1E51DA',
+  primaryHover: '#1746c2',
+  primaryLight: '#EFF6FF',
+  primaryLighter: '#F8FAFC',
+  primaryDark: '#0f308a',
 
   // Secondary Accents
-  accent: '#2563EB', // Lndon Blue 600
-  accentLight: '#EFF6FF', // Lndon Blue 50
+  accent: '#1E51DA',
+  accentLight: '#EFF6FF',
   teal: '#0D9488',
   tealLight: '#F0FDFA',
 
@@ -21,10 +21,10 @@ export const COLORS = {
   warningLight: '#FFFBEB',
   error: '#DC2626', // Red 600
   errorLight: '#FEF2F2',
-  info: '#0284C7',
-  infoLight: '#E0F2FE',
+  info: '#1E51DA',
+  infoLight: '#EFF6FF',
 
-  // Surfaces & Backgrounds (Crisp Light Blue & White)
+  // Surfaces & Backgrounds (Crisp Light Slate & White)
   background: '#F8FAFC',
   surface: '#FFFFFF',
   surfaceSecondary: '#F0F7FF', // Soft ice blue
@@ -41,8 +41,8 @@ export const COLORS = {
   // Borders & Dividers
   border: '#E2E8F0',
   borderLight: '#F1F5F9',
-  borderSky: '#BAE6FD', // Sky 200
-  borderFocus: '#38BDF8', // Sky 400
+  borderSky: '#BFDBFE',
+  borderFocus: '#1E51DA',
 };
 
 export const FONTS = {
@@ -71,22 +71,22 @@ export const SHADOWS = {
   none: {},
   sm: Platform.select({
     web: {
-      boxShadow: '0 1px 3px 0 rgba(14, 165, 233, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+      boxShadow: '0 1px 3px 0 rgba(30, 81, 218, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
     },
     default: {
-      shadowColor: '#0284C7',
+      shadowColor: '#1E51DA',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
+      shadowOpacity: 0.06,
       shadowRadius: 3,
       elevation: 1,
     },
   }),
   md: Platform.select({
     web: {
-      boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
+      boxShadow: '0 4px 6px -1px rgba(30, 81, 218, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
     },
     default: {
-      shadowColor: '#0284C7',
+      shadowColor: '#1E51DA',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.08,
       shadowRadius: 5,
@@ -95,12 +95,12 @@ export const SHADOWS = {
   }),
   lg: Platform.select({
     web: {
-      boxShadow: '0 10px 15px -3px rgba(14, 165, 233, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
+      boxShadow: '0 10px 15px -3px rgba(30, 81, 218, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
     },
     default: {
-      shadowColor: '#0284C7',
+      shadowColor: '#1E51DA',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
+      shadowOpacity: 0.12,
       shadowRadius: 8,
       elevation: 4,
     },

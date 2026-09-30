@@ -125,7 +125,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 
   return (
     <View style={styles.screenWrapper}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -410,7 +410,7 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
-    backgroundColor: '#1E51DA',
+    backgroundColor: '#F8FAFC',
   },
   container: {
     flex: 1,
@@ -427,19 +427,19 @@ const styles = StyleSheet.create({
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   brandLogo: {
-    width: 320,
-    height: 100,
+    width: 280,
+    height: 64,
   },
   card: {
-    backgroundColor: '#EEF4FC',
+    backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
-    ...SHADOWS.lg,
+    borderColor: '#E2E8F0',
+    ...SHADOWS.md,
   },
   cardTitle: {
     fontFamily: FONTS.family,
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#D4E0EE',
+    borderColor: '#E2E8F0',
     borderRadius: RADIUS.md,
     paddingHorizontal: 12,
   },
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   input: {
     fontFamily: FONTS.input,
     flex: 1,
-    height: 42,
+    height: 44,
     fontSize: 13.5,
     color: '#0F172A',
   },
@@ -500,11 +500,16 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     backgroundColor: '#1E51DA',
-    height: 44,
-    borderRadius: RADIUS.sm,
+    height: 46,
+    borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
+    marginTop: 8,
+    shadowColor: '#1E51DA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
   disabledButton: {
     opacity: 0.6,
