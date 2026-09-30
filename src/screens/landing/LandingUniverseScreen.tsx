@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,11 +23,8 @@ interface LandingUniverseScreenProps {
   navigation: any;
 }
 
-type PlatformTab = 'all' | 'ats' | 'crm' | 'hrms';
-
 export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<PlatformTab>('all');
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -38,13 +35,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
   const card3Anim = useRef(new Animated.Value(70)).current;
   const bottomBarAnim = useRef(new Animated.Value(80)).current;
 
-  // Continuous micro-animations
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const beaconRippleAnim = useRef(new Animated.Value(0)).current;
-  const floatAnim = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    // 1. Staggered Entrance Animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -87,113 +78,37 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
       Animated.timing(bottomBarAnim, {
         toValue: 0,
         duration: 700,
-        delay: 500,
+        delay: 450,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
-
-    // 2. Continuous Glowing Pulse for Live Status
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.25,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-
-    // 3. Continuous Beacon Ripple
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(beaconRippleAnim, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(beaconRippleAnim, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-
-    // 4. Subtle Floating Bob for Hero Tag
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: -4,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
   }, []);
 
-  const handleLaunchAts = () => {
-    navigation.navigate('Login');
+  const handleLaunchProduct = (product: 'ats' | 'crm' | 'hrms') => {
+    navigation.navigate('Login', { product });
   };
 
-  const handleRegisterAts = () => {
-    navigation.navigate('Register');
+  const handleRegisterProduct = (product: 'ats' | 'crm' | 'hrms') => {
+    navigation.navigate('Register', { product });
   };
 
   return (
     <View style={styles.screenWrapper}>
       <StatusBar style="dark" />
 
-      {/* Sticky Enterprise Header with Glass Backdrop */}
+      {/* Sticky Enterprise Header */}
       <View
         style={[
           styles.headerContainer,
           { paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 44 : 12) + 6 },
         ]}
       >
-        <View style={styles.headerLeft}>
-          <Image
-            source={require('../../../assets/thrm-universe-logo.png')}
-            style={styles.headerLogo}
-            resizeMode="contain"
-          />
-        </View>
-
-        <View style={styles.headerRight}>
-          <View style={styles.statusBadge}>
-            <View style={styles.statusDotWrapper}>
-              <Animated.View
-                style={[
-                  styles.statusPulseRing,
-                  {
-                    transform: [{ scale: pulseAnim }],
-                    opacity: pulseAnim.interpolate({
-                      inputRange: [1, 1.25],
-                      outputRange: [0.6, 0.15],
-                    }),
-                  },
-                ]}
-              />
-              <View style={styles.statusDot} />
-            </View>
-            <Text style={styles.statusText}>99.99% Live</Text>
-          </View>
-        </View>
+        <Image
+          source={require('../../../assets/thrm-universe-logo.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
       </View>
 
       <ScrollView
@@ -215,29 +130,11 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
         >
           {/* Subtle Ambient Radial Glow */}
           <LinearGradient
-            colors={['rgba(30, 81, 218, 0.12)', 'rgba(239, 246, 255, 0.6)', 'transparent']}
+            colors={['rgba(30, 81, 218, 0.1)', 'rgba(239, 246, 255, 0.5)', 'transparent']}
             style={styles.heroGlowBackdrop}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
           />
-
-          {/* Floating Pill Tag */}
-          <Animated.View
-            style={[
-              styles.universeTagWrapper,
-              { transform: [{ translateY: floatAnim }] },
-            ]}
-          >
-            <LinearGradient
-              colors={['#EFF6FF', '#DBEAFE']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.universeTag}
-            >
-              <Ionicons name="sparkles" size={13} color={COLORS.primary} />
-              <Text style={styles.universeTagText}>UNIFIED ENTERPRISE OPERATIONAL SUITE</Text>
-            </LinearGradient>
-          </Animated.View>
 
           <Text style={styles.heroTitle}>
             One Universe.{'\n'}
@@ -245,7 +142,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           </Text>
 
           <Text style={styles.heroSubtitle}>
-            Next-generation business infrastructure integrating talent recruitment velocity, intelligent client pipelines, and workforce compliance.
+            The unified THRM operational ecosystem powering talent recruitment velocity, intelligent client pipelines, and workforce operations.
           </Text>
         </Animated.View>
 
@@ -275,387 +172,370 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           </View>
         </Animated.View>
 
-        {/* Platform Selector Filter Tabs */}
-        <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'all' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('all')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
-              All Platforms (3)
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'ats' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('ats')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.tabActiveDot} />
-            <Text style={[styles.tabText, activeTab === 'ats' && styles.tabTextActive]}>
-              ATS • Live
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'crm' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('crm')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === 'crm' && styles.tabTextActive]}>
-              CRM
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'hrms' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('hrms')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, activeTab === 'hrms' && styles.tabTextActive]}>
-              HRMS
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Platform Showcase Cards */}
+        {/* Product Cards Container (All 3 Cards Equal & Production Grade) */}
         <View style={styles.cardsContainer}>
-          {/* Card 1: THRM ATS (Active & Featured) */}
-          {(activeTab === 'all' || activeTab === 'ats') && (
-            <Animated.View
-              style={[
-                styles.featuredCardWrapper,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateY: card1Anim }],
-                },
-              ]}
-            >
-              {/* Premium Gradient Outline Glow */}
+          {/* Card 1: THRM ATS */}
+          <Animated.View
+            style={[
+              styles.productCard,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: card1Anim }],
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
               <LinearGradient
-                colors={['#1E51DA', '#60A5FA', '#BFDBFE']}
+                colors={['#1E51DA', '#2563EB']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={styles.cardGradientBorder}
+                style={styles.cardIconBox}
               >
-                <View style={styles.cardInner}>
-                  {/* Top Status Banner */}
-                  <View style={styles.topActiveBanner}>
-                    <LinearGradient
-                      colors={['#1E51DA', '#1746c2']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.activeBannerGradient}
-                    >
-                      <View style={styles.activeBeaconRow}>
-                        <View style={styles.beaconDot} />
-                        <Text style={styles.activeBannerText}>ACTIVE PLATFORM • PRODUCTION READY</Text>
-                      </View>
-                    </LinearGradient>
-                  </View>
-
-                  <View style={styles.cardContent}>
-                    {/* Header Row */}
-                    <View style={styles.cardHeaderRow}>
-                      <LinearGradient
-                        colors={['#1E51DA', '#2563EB']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.cardIconBox}
-                      >
-                        <Ionicons name="people" size={24} color="#FFFFFF" />
-                      </LinearGradient>
-
-                      <View style={styles.categoryBadgePill}>
-                        <Ionicons name="sparkles" size={12} color={COLORS.primary} />
-                        <Text style={styles.categoryBadgeText}>Talent & Sourcing</Text>
-                      </View>
-                    </View>
-
-                    {/* Titles */}
-                    <View style={styles.titleRow}>
-                      <Text style={styles.productTitle}>THRM ATS</Text>
-                      <Text style={styles.productSubtitle}>Applicant Tracking System</Text>
-                    </View>
-
-                    <Text style={styles.productDescription}>
-                      Autonomous AI resume parsing, candidate scoring, interactive Kanban pipeline stages, and end-to-end interview intelligence.
-                    </Text>
-
-                    {/* Interactive Capabilities Grid */}
-                    <View style={styles.capabilitiesContainer}>
-                      <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
-
-                      <View style={styles.capabilityRow}>
-                        <View style={styles.checkIconBox}>
-                          <Ionicons name="checkmark-sharp" size={12} color={COLORS.primary} />
-                        </View>
-                        <Text style={styles.capabilityText}>AI Resume Parsing & Automated Scoring (0-100)</Text>
-                      </View>
-
-                      <View style={styles.capabilityRow}>
-                        <View style={styles.checkIconBox}>
-                          <Ionicons name="checkmark-sharp" size={12} color={COLORS.primary} />
-                        </View>
-                        <Text style={styles.capabilityText}>Drag-and-Drop Pipeline & Multi-Portal Sourcing</Text>
-                      </View>
-
-                      <View style={styles.capabilityRow}>
-                        <View style={styles.checkIconBox}>
-                          <Ionicons name="checkmark-sharp" size={12} color={COLORS.primary} />
-                        </View>
-                        <Text style={styles.capabilityText}>Integrated Interview Scheduling & Scorecards</Text>
-                      </View>
-                    </View>
-
-                    {/* Metrics Chip */}
-                    <View style={styles.metricsChip}>
-                      <Ionicons name="flash" size={14} color={COLORS.primary} />
-                      <Text style={styles.metricsChipText}>AI-Powered • 4x Faster Hiring Velocity</Text>
-                    </View>
-
-                    {/* Main CTA Button */}
-                    <TouchableOpacity
-                      onPress={handleLaunchAts}
-                      activeOpacity={0.88}
-                      style={styles.launchButtonTouchable}
-                    >
-                      <LinearGradient
-                        colors={['#1E51DA', '#1746c2']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.launchButtonGradient}
-                      >
-                        <Text style={styles.launchButtonText}>Launch ATS Workspace</Text>
-                        <View style={styles.launchButtonIconBox}>
-                          <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-                        </View>
-                      </LinearGradient>
-                    </TouchableOpacity>
-
-                    {/* Secondary Link */}
-                    <TouchableOpacity
-                      onPress={handleRegisterAts}
-                      activeOpacity={0.7}
-                      style={styles.createOrgLink}
-                    >
-                      <Text style={styles.createOrgText}>
-                        New organization? <Text style={styles.createOrgBold}>Create ATS workspace</Text>
-                      </Text>
-                      <Ionicons name="chevron-forward" size={13} color={COLORS.primary} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <Ionicons name="people" size={24} color="#FFFFFF" />
               </LinearGradient>
-            </Animated.View>
-          )}
+
+              <View style={styles.categoryBadgePill}>
+                <Text style={styles.categoryBadgeText}>Talent & Recruitment</Text>
+              </View>
+            </View>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.productTitle}>THRM ATS</Text>
+              <Text style={styles.productSubtitle}>Applicant Tracking System</Text>
+            </View>
+
+            <Text style={styles.productDescription}>
+              Supercharge your recruitment lifecycle from multi-channel candidate sourcing to AI-assisted resume screening and candidate onboarding.
+            </Text>
+
+            {/* Core Capabilities */}
+            <View style={styles.capabilitiesContainer}>
+              <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
+
+              <View style={styles.capabilityRow}>
+                <View style={styles.checkIconBox}>
+                  <Ionicons name="checkmark-sharp" size={12} color={COLORS.primary} />
+                </View>
+                <Text style={styles.capabilityText}>AI Resume Processing & Automated Scoring</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={styles.checkIconBox}>
+                  <Ionicons name="checkmark-sharp" size={12} color={COLORS.primary} />
+                </View>
+                <Text style={styles.capabilityText}>Interactive Kanban Pipeline & Multi-Portal Sourcing</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={styles.checkIconBox}>
+                  <Ionicons name="checkmark-sharp" size={12} color={COLORS.primary} />
+                </View>
+                <Text style={styles.capabilityText}>Automated Interview Coordination & Evaluator Feedback</Text>
+              </View>
+            </View>
+
+            {/* Metrics Chip */}
+            <View style={styles.metricsChip}>
+              <Ionicons name="flash" size={14} color={COLORS.primary} />
+              <Text style={styles.metricsChipText}>AI-Powered • 4x Faster Hiring</Text>
+            </View>
+
+            {/* Launch Button */}
+            <TouchableOpacity
+              onPress={() => handleLaunchProduct('ats')}
+              activeOpacity={0.88}
+              style={styles.launchButtonTouchable}
+            >
+              <LinearGradient
+                colors={['#1E51DA', '#1746c2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.launchButtonGradient}
+              >
+                <Text style={styles.launchButtonText}>Launch ATS Workspace</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* Create Org Link */}
+            <TouchableOpacity
+              onPress={() => handleRegisterProduct('ats')}
+              activeOpacity={0.7}
+              style={styles.createOrgLink}
+            >
+              <Text style={styles.createOrgText}>
+                New organization? <Text style={styles.createOrgBold}>Create ATS workspace</Text>
+              </Text>
+              <Ionicons name="chevron-forward" size={13} color={COLORS.primary} />
+            </TouchableOpacity>
+          </Animated.View>
 
           {/* Card 2: THRM CRM */}
-          {(activeTab === 'all' || activeTab === 'crm') && (
-            <Animated.View
-              style={[
-                styles.standardCard,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateY: card2Anim }],
-                },
-              ]}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeaderRow}>
-                  <LinearGradient
-                    colors={['#0284C7', '#0369A1']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.cardIconBox}
-                  >
-                    <Ionicons name="trending-up" size={24} color="#FFFFFF" />
-                  </LinearGradient>
+          <Animated.View
+            style={[
+              styles.productCard,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: card2Anim }],
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <LinearGradient
+                colors={['#0284C7', '#0369A1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.cardIconBox, { shadowColor: '#0284C7' }]}
+              >
+                <Ionicons name="trending-up" size={24} color="#FFFFFF" />
+              </LinearGradient>
 
-                  <View style={[styles.categoryBadgePill, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
-                    <Text style={[styles.categoryBadgeText, { color: '#0284C7' }]}>Sales & Velocity</Text>
-                  </View>
-                </View>
-
-                <View style={styles.titleRow}>
-                  <Text style={styles.productTitle}>THRM CRM</Text>
-                  <Text style={[styles.productSubtitle, { color: '#0284C7' }]}>
-                    Customer Relationship Management
-                  </Text>
-                </View>
-
-                <Text style={styles.productDescription}>
-                  Intelligent client pipelines, deal velocity, lead scoring, and automated revenue growth engine.
-                </Text>
-
-                <View style={styles.capabilitiesContainer}>
-                  <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
-
-                  <View style={styles.capabilityRow}>
-                    <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
-                      <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
-                    </View>
-                    <Text style={styles.capabilityText}>Visual Deal Pipeline & Revenue Forecasting</Text>
-                  </View>
-
-                  <View style={styles.capabilityRow}>
-                    <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
-                      <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
-                    </View>
-                    <Text style={styles.capabilityText}>Real-Time Client Velocity & Deal Health</Text>
-                  </View>
-                </View>
-
-                <View style={[styles.metricsChip, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
-                  <Ionicons name="speedometer-outline" size={14} color="#0284C7" />
-                  <Text style={[styles.metricsChipText, { color: '#0369A1' }]}>
-                    Pipeline Velocity • Deal Tracking
-                  </Text>
-                </View>
-
-                <View style={styles.companionRibbon}>
-                  <Ionicons name="globe-outline" size={15} color="#64748B" />
-                  <Text style={styles.companionRibbonText}>Web Active • Mobile Companion In Progress</Text>
-                </View>
+              <View style={[styles.categoryBadgePill, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
+                <Text style={[styles.categoryBadgeText, { color: '#0284C7' }]}>Sales & Revenue</Text>
               </View>
-            </Animated.View>
-          )}
+            </View>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.productTitle}>THRM CRM</Text>
+              <Text style={[styles.productSubtitle, { color: '#0284C7' }]}>
+                Customer Relationship Management
+              </Text>
+            </View>
+
+            <Text style={styles.productDescription}>
+              Intelligent client pipelines, deal velocity, lead scoring, and automated revenue growth engine.
+            </Text>
+
+            <View style={styles.capabilitiesContainer}>
+              <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
+                </View>
+                <Text style={styles.capabilityText}>Visual Deal Pipeline & Forecasting</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
+                </View>
+                <Text style={styles.capabilityText}>Real-Time Revenue Velocity Tracking</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
+                </View>
+                <Text style={styles.capabilityText}>Automated Client Follow-ups & Reminders</Text>
+              </View>
+            </View>
+
+            <View style={[styles.metricsChip, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
+              <Ionicons name="flash" size={14} color="#0284C7" />
+              <Text style={[styles.metricsChipText, { color: '#0369A1' }]}>
+                Pipeline Velocity • Deal Tracking
+              </Text>
+            </View>
+
+            {/* Launch Button */}
+            <TouchableOpacity
+              onPress={() => handleLaunchProduct('crm')}
+              activeOpacity={0.88}
+              style={[styles.launchButtonTouchable, { shadowColor: '#0284C7' }]}
+            >
+              <LinearGradient
+                colors={['#0284C7', '#0369A1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.launchButtonGradient}
+              >
+                <Text style={styles.launchButtonText}>Launch CRM Workspace</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleRegisterProduct('crm')}
+              activeOpacity={0.7}
+              style={styles.createOrgLink}
+            >
+              <Text style={styles.createOrgText}>
+                New organization? <Text style={[styles.createOrgBold, { color: '#0284C7' }]}>Create CRM workspace</Text>
+              </Text>
+              <Ionicons name="chevron-forward" size={13} color="#0284C7" />
+            </TouchableOpacity>
+          </Animated.View>
 
           {/* Card 3: THRM HRMS */}
-          {(activeTab === 'all' || activeTab === 'hrms') && (
-            <Animated.View
-              style={[
-                styles.standardCard,
-                {
-                  opacity: fadeAnim,
-                  transform: [{ translateY: card3Anim }],
-                },
-              ]}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeaderRow}>
-                  <LinearGradient
-                    colors={['#0D9488', '#0F766E']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.cardIconBox}
-                  >
-                    <Ionicons name="business" size={24} color="#FFFFFF" />
-                  </LinearGradient>
+          <Animated.View
+            style={[
+              styles.productCard,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: card3Anim }],
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <LinearGradient
+                colors={['#0D9488', '#0F766E']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.cardIconBox, { shadowColor: '#0D9488' }]}
+              >
+                <Ionicons name="business" size={24} color="#FFFFFF" />
+              </LinearGradient>
 
-                  <View style={[styles.categoryBadgePill, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4' }]}>
-                    <Text style={[styles.categoryBadgeText, { color: '#0D9488' }]}>People & Ops</Text>
-                  </View>
-                </View>
-
-                <View style={styles.titleRow}>
-                  <Text style={styles.productTitle}>THRM HRMS</Text>
-                  <Text style={[styles.productSubtitle, { color: '#0D9488' }]}>
-                    Human Resource Management System
-                  </Text>
-                </View>
-
-                <Text style={styles.productDescription}>
-                  Unified workforce operations covering employee lifecycle, attendance, payroll records, and statutory compliance.
-                </Text>
-
-                <View style={styles.capabilitiesContainer}>
-                  <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
-
-                  <View style={styles.capabilityRow}>
-                    <View style={[styles.checkIconBox, { backgroundColor: '#F0FDFA' }]}>
-                      <Ionicons name="checkmark-sharp" size={12} color="#0D9488" />
-                    </View>
-                    <Text style={styles.capabilityText}>Complete Employee Lifecycle & Records</Text>
-                  </View>
-
-                  <View style={styles.capabilityRow}>
-                    <View style={[styles.checkIconBox, { backgroundColor: '#F0FDFA' }]}>
-                      <Ionicons name="checkmark-sharp" size={12} color="#0D9488" />
-                    </View>
-                    <Text style={styles.capabilityText}>Leave Tracking & Shift Rostering</Text>
-                  </View>
-                </View>
-
-                <View style={[styles.metricsChip, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4' }]}>
-                  <Ionicons name="shield-checkmark-outline" size={14} color="#0D9488" />
-                  <Text style={[styles.metricsChipText, { color: '#0F766E' }]}>
-                    Employee Lifecycle • Compliance
-                  </Text>
-                </View>
-
-                <View style={styles.companionRibbon}>
-                  <Ionicons name="globe-outline" size={15} color="#64748B" />
-                  <Text style={styles.companionRibbonText}>Web Active • Mobile Companion In Progress</Text>
-                </View>
+              <View style={[styles.categoryBadgePill, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4' }]}>
+                <Text style={[styles.categoryBadgeText, { color: '#0D9488' }]}>People & Operations</Text>
               </View>
-            </Animated.View>
-          )}
+            </View>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.productTitle}>THRM HRMS</Text>
+              <Text style={[styles.productSubtitle, { color: '#0D9488' }]}>
+                Human Resource Management System
+              </Text>
+            </View>
+
+            <Text style={styles.productDescription}>
+              Unified workforce operations covering employee lifecycle, attendance, payroll records, and statutory compliance.
+            </Text>
+
+            <View style={styles.capabilitiesContainer}>
+              <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0FDFA' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0D9488" />
+                </View>
+                <Text style={styles.capabilityText}>Complete Employee Lifecycle & Profiles</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0FDFA' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0D9488" />
+                </View>
+                <Text style={styles.capabilityText}>Leave Tracking & Shift Rostering</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0FDFA' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0D9488" />
+                </View>
+                <Text style={styles.capabilityText}>Enterprise Statutory & Audit Compliance</Text>
+              </View>
+            </View>
+
+            <View style={[styles.metricsChip, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4' }]}>
+              <Ionicons name="flash" size={14} color="#0D9488" />
+              <Text style={[styles.metricsChipText, { color: '#0F766E' }]}>
+                Employee Lifecycle • Compliance
+              </Text>
+            </View>
+
+            {/* Launch Button */}
+            <TouchableOpacity
+              onPress={() => handleLaunchProduct('hrms')}
+              activeOpacity={0.88}
+              style={[styles.launchButtonTouchable, { shadowColor: '#0D9488' }]}
+            >
+              <LinearGradient
+                colors={['#0D9488', '#0F766E']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.launchButtonGradient}
+              >
+                <Text style={styles.launchButtonText}>Launch HRMS Workspace</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleRegisterProduct('hrms')}
+              activeOpacity={0.7}
+              style={styles.createOrgLink}
+            >
+              <Text style={styles.createOrgText}>
+                New organization? <Text style={[styles.createOrgBold, { color: '#0D9488' }]}>Create HRMS workspace</Text>
+              </Text>
+              <Ionicons name="chevron-forward" size={13} color="#0D9488" />
+            </TouchableOpacity>
+          </Animated.View>
         </View>
 
-        {/* Enterprise Backbone Pillars (2x2 Grid) */}
+        {/* Enterprise Backbone Pillars (Increased Typography) */}
         <View style={styles.backboneCard}>
           <View style={styles.backboneHeader}>
             <Text style={styles.backboneTitle}>Built on a Shared Enterprise Backbone</Text>
             <Text style={styles.backboneSubtitle}>
-              Deeply unified architecture eliminating data fragmentation across talent, revenue, and workforce ops.
+              Every application in the THRM Universe is deeply interconnected, ensuring zero data silos across operations.
             </Text>
           </View>
 
           <View style={styles.pillarsGrid}>
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="lock-closed" size={18} color={COLORS.primary} />
+                <Ionicons name="lock-closed" size={22} color={COLORS.primary} />
               </View>
               <Text style={styles.pillarTitle}>Universal Identity</Text>
-              <Text style={styles.pillarDesc}>Multi-tenant workspace slugs with granular RBAC permissions.</Text>
+              <Text style={styles.pillarDesc}>
+                Centralized authentication with multi-tenant workspace slugs and granular role-based permissions.
+              </Text>
             </View>
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="hardware-chip" size={18} color={COLORS.primary} />
+                <Ionicons name="hardware-chip" size={22} color={COLORS.primary} />
               </View>
-              <Text style={styles.pillarTitle}>AI Intelligence</Text>
-              <Text style={styles.pillarDesc}>Deep resume semantics, fit scoring, and smart pipeline summaries.</Text>
+              <Text style={styles.pillarTitle}>AI Engine Integration</Text>
+              <Text style={styles.pillarDesc}>
+                Automated document parsing, smart candidate scoring, and predictive sales pipeline analytics.
+              </Text>
             </View>
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="shield-checkmark" size={18} color={COLORS.primary} />
+                <Ionicons name="shield-checkmark" size={22} color={COLORS.primary} />
               </View>
               <Text style={styles.pillarTitle}>Isolated Security</Text>
-              <Text style={styles.pillarDesc}>Tenant row-level security, audit trails, and automatic encrypted backups.</Text>
+              <Text style={styles.pillarDesc}>
+                Complete database row-level tenant isolation, audit logging, and automated cloud backups.
+              </Text>
             </View>
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="phone-portrait" size={18} color={COLORS.primary} />
+                <Ionicons name="phone-portrait" size={22} color={COLORS.primary} />
               </View>
-              <Text style={styles.pillarTitle}>Mobile Native</Text>
-              <Text style={styles.pillarDesc}>Real-time push notifications, candidate reviews, and quick approvals.</Text>
+              <Text style={styles.pillarTitle}>Mobile Companion</Text>
+              <Text style={styles.pillarDesc}>
+                Native Android mobile app providing real-time push alerts, interview reviews, and approval actions.
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* Enterprise Trust Ribbon */}
-        <View style={styles.trustRibbon}>
-          <Ionicons name="shield-checkmark-outline" size={14} color="#64748B" />
-          <Text style={styles.trustText}>
-            Enterprise Grade • Zero Data Silos • End-to-End Encryption
-          </Text>
-        </View>
-
-        {/* Footer */}
+        {/* Production-Grade Mobile Footer */}
         <View style={styles.footerSection}>
           <Image
             source={require('../../../assets/thrm-universe-logo.png')}
             style={styles.footerLogo}
             resizeMode="contain"
           />
-          <Text style={styles.footerCopyright}>
-            © {new Date().getFullYear()} THRM Universe. Enterprise Operations Ecosystem.
+          <Text style={styles.footerDescription}>
+            Unified enterprise operational suite for talent recruitment, client pipelines, and workforce operations.
           </Text>
+          <View style={styles.footerDivider} />
+          <Text style={styles.footerCopyright}>
+            © {new Date().getFullYear()} THRM Universe. All rights reserved.
+          </Text>
+          <View style={styles.footerBadgesRow}>
+            <Text style={styles.footerBadgeText}>Enterprise Multi-Tenant</Text>
+            <Text style={styles.footerBadgeDot}>•</Text>
+            <Text style={styles.footerBadgeText}>Encrypted Architecture</Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -671,13 +551,13 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
       >
         <View style={styles.floatingBarInner}>
           <View style={styles.floatingBarInfo}>
-            <Text style={styles.floatingBarTitle}>THRM ATS Mobile</Text>
-            <Text style={styles.floatingBarSub}>Ready to access your workspace?</Text>
+            <Text style={styles.floatingBarTitle}>THRM Universe</Text>
+            <Text style={styles.floatingBarSub}>Access any enterprise workspace</Text>
           </View>
 
           <TouchableOpacity
             style={styles.floatingLaunchBtn}
-            onPress={handleLaunchAts}
+            onPress={() => handleLaunchProduct('ats')}
             activeOpacity={0.88}
           >
             <LinearGradient
@@ -704,7 +584,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 20,
     paddingBottom: 12,
     backgroundColor: '#FFFFFF',
@@ -713,53 +593,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
     ...SHADOWS.sm,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   headerLogo: {
-    width: 135,
-    height: 38,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 9,
-    borderRadius: RADIUS.full,
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  statusDotWrapper: {
-    width: 8,
-    height: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#10B981',
-  },
-  statusPulseRing: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#10B981',
-  },
-  statusText: {
-    fontFamily: FONTS.family,
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#065F46',
+    width: 145,
+    height: 42,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -782,31 +618,6 @@ const styles = StyleSheet.create({
     borderRadius: 110,
     opacity: 0.8,
   },
-  universeTagWrapper: {
-    marginBottom: 12,
-  },
-  universeTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  universeTagText: {
-    fontFamily: FONTS.family,
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    color: COLORS.primary,
-  },
   heroTitle: {
     fontFamily: FONTS.heading,
     fontSize: 27,
@@ -822,11 +633,11 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 18.5,
-    maxWidth: 330,
+    lineHeight: 19,
+    maxWidth: 340,
   },
   statsRibbon: {
     flexDirection: 'row',
@@ -839,7 +650,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     marginTop: 6,
-    marginBottom: 18,
+    marginBottom: 20,
     ...SHADOWS.sm,
   },
   statBox: {
@@ -848,13 +659,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: FONTS.heading,
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '800',
     color: COLORS.primary,
   },
   statLabel: {
     fontFamily: FONTS.family,
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '600',
     color: '#64748B',
     marginTop: 1,
@@ -864,95 +675,16 @@ const styles = StyleSheet.create({
     height: 24,
     backgroundColor: '#E2E8F0',
   },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: RADIUS.md,
-    padding: 3,
-    marginBottom: 16,
-    gap: 4,
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
-    borderRadius: RADIUS.sm,
-  },
-  tabButtonActive: {
-    backgroundColor: '#FFFFFF',
-    ...SHADOWS.sm,
-  },
-  tabActiveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-  },
-  tabText: {
-    fontFamily: FONTS.family,
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  tabTextActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
   cardsContainer: {
-    gap: 16,
+    gap: 18,
   },
-  featuredCardWrapper: {
-    borderRadius: RADIUS.xl + 2,
-    ...SHADOWS.lg,
-  },
-  cardGradientBorder: {
-    padding: 1.5,
-    borderRadius: RADIUS.xl + 2,
-  },
-  cardInner: {
+  productCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
-    overflow: 'hidden',
-  },
-  topActiveBanner: {
-    width: '100%',
-  },
-  activeBannerGradient: {
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  activeBeaconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  beaconDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#34D399',
-  },
-  activeBannerText: {
-    fontFamily: FONTS.family,
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.8,
-  },
-  standardCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.xl,
+    padding: 22,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    overflow: 'hidden',
     ...SHADOWS.md,
-  },
-  cardContent: {
-    padding: 20,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -961,21 +693,17 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   cardIconBox: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 4,
   },
   categoryBadgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: RADIUS.full,
@@ -1010,9 +738,9 @@ const styles = StyleSheet.create({
   },
   productDescription: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#475569',
-    lineHeight: 18.5,
+    lineHeight: 19,
     marginBottom: 14,
   },
   capabilitiesContainer: {
@@ -1026,7 +754,7 @@ const styles = StyleSheet.create({
   },
   capabilitiesHeader: {
     fontFamily: FONTS.family,
-    fontSize: 9.5,
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.6,
     color: '#94A3B8',
@@ -1047,10 +775,11 @@ const styles = StyleSheet.create({
   },
   capabilityText: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#334155',
     flex: 1,
     fontWeight: '500',
+    lineHeight: 16.5,
   },
   metricsChip: {
     flexDirection: 'row',
@@ -1073,7 +802,6 @@ const styles = StyleSheet.create({
   launchButtonTouchable: {
     borderRadius: RADIUS.md,
     overflow: 'hidden',
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1094,14 +822,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },
-  launchButtonIconBox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   createOrgLink: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1112,125 +832,122 @@ const styles = StyleSheet.create({
   },
   createOrgText: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#64748B',
   },
   createOrgBold: {
     color: COLORS.primary,
     fontWeight: '700',
   },
-  companionRibbon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    backgroundColor: '#F8FAFC',
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  companionRibbonText: {
-    fontFamily: FONTS.family,
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#64748B',
-  },
   backboneCard: {
-    marginTop: 24,
+    marginTop: 26,
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
-    padding: 18,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     ...SHADOWS.sm,
   },
   backboneHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   backboneTitle: {
     fontFamily: FONTS.heading,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   backboneSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
+    fontSize: 13,
     color: '#64748B',
     textAlign: 'center',
-    lineHeight: 16.5,
+    lineHeight: 18,
   },
   pillarsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    gap: 12,
   },
   pillarTile: {
-    width: (width - 64 - 10) / 2,
     backgroundColor: '#F8FAFC',
-    borderRadius: RADIUS.md,
-    padding: 12,
+    borderRadius: RADIUS.lg,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
   pillarIconCircle: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.sm,
     backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   pillarTitle: {
     fontFamily: FONTS.family,
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
     color: '#0F172A',
-    marginBottom: 3,
+    marginBottom: 4,
   },
   pillarDesc: {
     fontFamily: FONTS.family,
-    fontSize: 10.5,
-    color: '#64748B',
-    lineHeight: 14.5,
-  },
-  trustRibbon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 20,
-    paddingVertical: 8,
-  },
-  trustText: {
-    fontFamily: FONTS.family,
-    fontSize: 10.5,
-    fontWeight: '600',
-    color: '#64748B',
+    fontSize: 12.5,
+    color: '#475569',
+    lineHeight: 18,
   },
   footerSection: {
     alignItems: 'center',
-    marginTop: 14,
-    paddingTop: 16,
+    marginTop: 20,
+    paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
     gap: 8,
   },
   footerLogo: {
-    width: 120,
-    height: 32,
-    opacity: 0.8,
+    width: 130,
+    height: 36,
+    opacity: 0.9,
+  },
+  footerDescription: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#64748B',
+    textAlign: 'center',
+    maxWidth: 320,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  footerDivider: {
+    width: '60%',
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 6,
   },
   footerCopyright: {
     fontFamily: FONTS.family,
-    fontSize: 10.5,
+    fontSize: 11,
     color: '#94A3B8',
     textAlign: 'center',
+  },
+  footerBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  footerBadgeText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  footerBadgeDot: {
+    fontSize: 10,
+    color: '#94A3B8',
   },
   floatingBottomBar: {
     position: 'absolute',
