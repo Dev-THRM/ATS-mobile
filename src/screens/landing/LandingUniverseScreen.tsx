@@ -191,6 +191,15 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           style={styles.headerLogo}
           resizeMode="contain"
         />
+
+        <TouchableOpacity
+          onPress={() => handleLaunchProduct('ats')}
+          style={styles.headerSignInBtn}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.headerSignInText}>Sign In</Text>
+          <Ionicons name="arrow-forward" size={13} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -203,6 +212,14 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Subtle Ambient Radial Sky Glow across the entire top viewport */}
+        <LinearGradient
+          colors={['#EEF4FF', '#F8FAFC', '#FFFFFF']}
+          style={styles.heroBackgroundGradient}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.55 }}
+        />
+
         {/* SECTION 1: Full-Height Initial Hero Viewport (ONLY this is visible on load) */}
         <Animated.View
           style={[
@@ -214,18 +231,17 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             },
           ]}
         >
-          {/* Subtle Ambient Radial Glow */}
-          <LinearGradient
-            colors={['rgba(30, 81, 218, 0.1)', 'rgba(239, 246, 255, 0.5)', 'transparent']}
-            style={styles.heroGlowBackdrop}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-          />
-
           <View style={styles.heroCenterContent}>
+            {/* Enterprise Suite Pill Badge */}
+            <View style={styles.heroPillBadge}>
+              <View style={styles.heroPillDot} />
+              <Text style={styles.heroPillBadgeText}>Unified Enterprise Suite</Text>
+            </View>
+
             <Text style={styles.heroTitle}>
               One Universe.{'\n'}
-              <Text style={styles.heroHighlight}>Three Powerhouse</Text> Platforms.
+              <Text style={styles.heroHighlight}>Three Powerhouse</Text>{'\n'}
+              Platforms.
             </Text>
 
             <Text style={styles.heroSubtitle}>
@@ -243,7 +259,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             >
               <View style={styles.statBox}>
                 <Text style={styles.statValue}>4x</Text>
-                <Text style={styles.statLabel}>Hiring Speed</Text>
+                <Text style={styles.statLabel}>Hiring Velocity</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statBox}>
@@ -253,9 +269,39 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
               <View style={styles.statDivider} />
               <View style={styles.statBox}>
                 <Text style={styles.statValue}>3-in-1</Text>
-                <Text style={styles.statLabel}>Zero Silos</Text>
+                <Text style={styles.statLabel}>Zero Data Silos</Text>
               </View>
             </Animated.View>
+
+            {/* Hero Quick Action Touch Targets */}
+            <View style={styles.heroActionsRow}>
+              <TouchableOpacity
+                style={styles.heroExploreBtn}
+                onPress={scrollToCards}
+                activeOpacity={0.85}
+              >
+                <LinearGradient
+                  colors={['#1E51DA', '#1746c2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.heroExploreGradient}
+                >
+                  <Text style={styles.heroExploreText}>Explore Platforms</Text>
+                  <Animated.View style={{ transform: [{ translateY: scrollIndicatorBounce }] }}>
+                    <Ionicons name="arrow-down" size={15} color="#FFFFFF" />
+                  </Animated.View>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.heroSignInBtn}
+                onPress={() => handleLaunchProduct('ats')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.heroSignInBtnText}>Sign In</Text>
+                <Ionicons name="chevron-forward" size={15} color={COLORS.primary} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Animated Scroll Prompt Indicator */}
@@ -264,9 +310,9 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             onPress={scrollToCards}
             activeOpacity={0.7}
           >
-            <Text style={styles.scrollIndicatorText}>Scroll to explore platforms</Text>
+            <Text style={styles.scrollIndicatorText}>Scroll to explore</Text>
             <Animated.View style={{ transform: [{ translateY: scrollIndicatorBounce }] }}>
-              <Ionicons name="chevron-down" size={20} color={COLORS.primary} />
+              <Ionicons name="chevron-down" size={18} color={COLORS.primary} />
             </Animated.View>
           </TouchableOpacity>
         </Animated.View>
@@ -691,79 +737,125 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 12,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
     zIndex: 10,
     ...SHADOWS.sm,
   },
   headerLogo: {
-    width: 145,
-    height: 42,
+    width: 150,
+    height: 44,
+  },
+  headerSignInBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.full,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  headerSignInText: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   scrollContent: {
     paddingHorizontal: 16,
+    position: 'relative',
+  },
+  heroBackgroundGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 520,
   },
   heroSection: {
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 24,
-    paddingBottom: 20,
+    paddingTop: 28,
+    paddingBottom: 16,
     position: 'relative',
-    overflow: 'hidden',
   },
   heroCenterContent: {
     alignItems: 'center',
     textAlign: 'center',
     width: '100%',
-    marginVertical: 'auto',
+    paddingTop: 8,
   },
-  heroGlowBackdrop: {
-    position: 'absolute',
-    top: -20,
-    left: -40,
-    right: -40,
-    height: 260,
-    borderRadius: 130,
-    opacity: 0.8,
+  heroPillBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.full,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 18,
+    ...SHADOWS.sm,
+  },
+  heroPillDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#1E51DA',
+  },
+  heroPillBadgeText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#1E51DA',
+    letterSpacing: 0.3,
   },
   heroTitle: {
     fontFamily: FONTS.heading,
-    fontSize: 28,
-    fontWeight: '900',
-    lineHeight: 36,
+    fontSize: 32,
+    fontWeight: '800',
+    lineHeight: 40,
     color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 12,
-    letterSpacing: -0.5,
+    marginBottom: 14,
+    letterSpacing: -0.6,
   },
   heroHighlight: {
     color: COLORS.primary,
   },
   heroSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     maxWidth: 340,
+    paddingHorizontal: 6,
   },
   statsRibbon: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.lg,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    marginTop: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    marginTop: 24,
     width: '100%',
-    ...SHADOWS.sm,
+    shadowColor: '#1E51DA',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    elevation: 4,
   },
   statBox: {
     alignItems: 'center',
@@ -771,7 +863,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: FONTS.heading,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: COLORS.primary,
   },
@@ -780,24 +872,73 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#64748B',
-    marginTop: 2,
+    marginTop: 3,
   },
   statDivider: {
     width: 1,
-    height: 26,
+    height: 28,
     backgroundColor: '#E2E8F0',
+  },
+  heroActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 24,
+    width: '100%',
+  },
+  heroExploreBtn: {
+    borderRadius: RADIUS.full,
+    overflow: 'hidden',
+    shadowColor: '#1E51DA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  heroExploreGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 13,
+    paddingHorizontal: 22,
+  },
+  heroExploreText: {
+    fontFamily: FONTS.family,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  heroSignInBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: RADIUS.full,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...SHADOWS.sm,
+  },
+  heroSignInBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   scrollIndicator: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    paddingVertical: 10,
+    paddingVertical: 8,
+    marginTop: 8,
   },
   scrollIndicatorText: {
     fontFamily: FONTS.family,
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
-    color: '#64748B',
+    color: '#94A3B8',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
