@@ -344,7 +344,7 @@ export const RegisterScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
-    backgroundColor: '#2846C3',
+    backgroundColor: '#1E51DA',
   },
   keyboardContainer: {
     flex: 1,
@@ -458,8 +458,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   channelChipSelected: {
-    backgroundColor: '#2846C3',
-    borderColor: '#2846C3',
+    backgroundColor: '#1E51DA',
+    borderColor: '#1E51DA',
   },
   channelChipText: {
     fontFamily: FONTS.family,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   registerButton: {
-    backgroundColor: '#2846C3',
+    backgroundColor: '#1E51DA',
     height: 44,
     borderRadius: RADIUS.sm,
     alignItems: 'center',
@@ -508,6 +508,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 13,
     fontWeight: '700',
-    color: '#2846C3',
+    color: '#1E51DA',
   },
 });
