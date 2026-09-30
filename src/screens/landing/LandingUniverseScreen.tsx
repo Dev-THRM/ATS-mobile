@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Animated,
   Easing,
   Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface LandingUniverseScreenProps {
   navigation: any;
@@ -25,17 +27,24 @@ interface LandingUniverseScreenProps {
 
 export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const cardsTriggered = useRef(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const heroSlideAnim = useRef(new Animated.Value(30)).current;
   const statsSlideAnim = useRef(new Animated.Value(40)).current;
-  const card1Anim = useRef(new Animated.Value(50)).current;
-  const card2Anim = useRef(new Animated.Value(60)).current;
-  const card3Anim = useRef(new Animated.Value(70)).current;
+  const scrollIndicatorBounce = useRef(new Animated.Value(0)).current;
+
+  // Card entrance animations (triggered on scroll)
+  const cardOpacityAnim = useRef(new Animated.Value(0)).current;
+  const card1Anim = useRef(new Animated.Value(80)).current;
+  const card2Anim = useRef(new Animated.Value(100)).current;
+  const card3Anim = useRef(new Animated.Value(120)).current;
   const bottomBarAnim = useRef(new Animated.Value(80)).current;
 
   useEffect(() => {
+    // Entrance for Hero
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -55,35 +64,80 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
+    ]).start();
+
+    // Continuous Bounce for Scroll Indicator
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scrollIndicatorBounce, {
+          toValue: 6,
+          duration: 900,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scrollIndicatorBounce, {
+          toValue: 0,
+          duration: 900,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+
+  const triggerCardsAnimation = () => {
+    if (cardsTriggered.current) return;
+    cardsTriggered.current = true;
+
+    Animated.parallel([
+      Animated.timing(cardOpacityAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
       Animated.stagger(120, [
         Animated.timing(card1Anim, {
           toValue: 0,
-          duration: 650,
+          duration: 600,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(card2Anim, {
           toValue: 0,
-          duration: 650,
+          duration: 600,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(card3Anim, {
           toValue: 0,
-          duration: 650,
+          duration: 600,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
       Animated.timing(bottomBarAnim, {
         toValue: 0,
-        duration: 700,
-        delay: 450,
+        duration: 500,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  };
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 30) {
+      triggerCardsAnimation();
+    }
+  };
+
+  const scrollToCards = () => {
+    triggerCardsAnimation();
+    scrollViewRef.current?.scrollTo({
+      y: height - 160,
+      animated: true,
+    });
+  };
 
   const handleLaunchProduct = (product: 'ats' | 'crm' | 'hrms') => {
     navigation.navigate('Login', { product });
@@ -112,17 +166,21 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: Math.max(insets.bottom, 24) + 90 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Animated Hero Section */}
+        {/* Full-Height Initial Hero Viewport (ONLY this is visible on load) */}
         <Animated.View
           style={[
             styles.heroSection,
             {
+              minHeight: height - (Platform.OS === 'ios' ? 140 : 120),
               opacity: fadeAnim,
               transform: [{ translateY: heroSlideAnim }],
             },
@@ -136,50 +194,63 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             end={{ x: 0.5, y: 1 }}
           />
 
-          <Text style={styles.heroTitle}>
-            One Universe.{'\n'}
-            <Text style={styles.heroHighlight}>Three Powerhouse</Text> Platforms.
-          </Text>
+          <View style={styles.heroCenterContent}>
+            <Text style={styles.heroTitle}>
+              One Universe.{'\n'}
+              <Text style={styles.heroHighlight}>Three Powerhouse</Text> Platforms.
+            </Text>
 
-          <Text style={styles.heroSubtitle}>
-            The unified THRM operational ecosystem powering talent recruitment velocity, intelligent client pipelines, and workforce operations.
-          </Text>
+            <Text style={styles.heroSubtitle}>
+              The unified THRM operational ecosystem powering talent recruitment velocity, intelligent client pipelines, and workforce operations.
+            </Text>
+
+            {/* Live Metrics Ribbon */}
+            <Animated.View
+              style={[
+                styles.statsRibbon,
+                {
+                  transform: [{ translateY: statsSlideAnim }],
+                },
+              ]}
+            >
+              <View style={styles.statBox}>
+                <Text style={styles.statValue}>4x</Text>
+                <Text style={styles.statLabel}>Hiring Speed</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statValue}>99.99%</Text>
+                <Text style={styles.statLabel}>Enterprise SLA</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statBox}>
+                <Text style={styles.statValue}>3-in-1</Text>
+                <Text style={styles.statLabel}>Zero Silos</Text>
+              </View>
+            </Animated.View>
+          </View>
+
+          {/* Animated Scroll Prompt Indicator */}
+          <TouchableOpacity
+            style={styles.scrollIndicator}
+            onPress={scrollToCards}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.scrollIndicatorText}>Scroll to explore platforms</Text>
+            <Animated.View style={{ transform: [{ translateY: scrollIndicatorBounce }] }}>
+              <Ionicons name="chevron-down" size={20} color={COLORS.primary} />
+            </Animated.View>
+          </TouchableOpacity>
         </Animated.View>
 
-        {/* Live Metrics Ribbon */}
-        <Animated.View
-          style={[
-            styles.statsRibbon,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: statsSlideAnim }],
-            },
-          ]}
-        >
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>4x</Text>
-            <Text style={styles.statLabel}>Hiring Speed</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>99.99%</Text>
-            <Text style={styles.statLabel}>Enterprise SLA</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>3-in-1</Text>
-            <Text style={styles.statLabel}>Zero Silos</Text>
-          </View>
-        </Animated.View>
-
-        {/* Product Cards Container (All 3 Cards Equal & Production Grade) */}
+        {/* Product Cards Container (Animates in on scroll) */}
         <View style={styles.cardsContainer}>
           {/* Card 1: THRM ATS */}
           <Animated.View
             style={[
               styles.productCard,
               {
-                opacity: fadeAnim,
+                opacity: cardOpacityAnim,
                 transform: [{ translateY: card1Anim }],
               },
             ]}
@@ -275,7 +346,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             style={[
               styles.productCard,
               {
-                opacity: fadeAnim,
+                opacity: cardOpacityAnim,
                 transform: [{ translateY: card2Anim }],
               },
             ]}
@@ -372,7 +443,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             style={[
               styles.productCard,
               {
-                opacity: fadeAnim,
+                opacity: cardOpacityAnim,
                 transform: [{ translateY: card3Anim }],
               },
             ]}
@@ -599,33 +670,38 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
   },
   heroSection: {
     alignItems: 'center',
-    textAlign: 'center',
-    paddingTop: 14,
-    paddingBottom: 16,
+    justifyContent: 'space-between',
+    paddingTop: 24,
+    paddingBottom: 20,
     position: 'relative',
     overflow: 'hidden',
+  },
+  heroCenterContent: {
+    alignItems: 'center',
+    textAlign: 'center',
+    width: '100%',
+    marginVertical: 'auto',
   },
   heroGlowBackdrop: {
     position: 'absolute',
     top: -20,
     left: -40,
     right: -40,
-    height: 220,
-    borderRadius: 110,
+    height: 260,
+    borderRadius: 130,
     opacity: 0.8,
   },
   heroTitle: {
     fontFamily: FONTS.heading,
-    fontSize: 27,
+    fontSize: 28,
     fontWeight: '900',
-    lineHeight: 34,
+    lineHeight: 36,
     color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
     letterSpacing: -0.5,
   },
   heroHighlight: {
@@ -633,10 +709,10 @@ const styles = StyleSheet.create({
   },
   heroSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: 20,
     maxWidth: 340,
   },
   statsRibbon: {
@@ -647,10 +723,10 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 8,
-    marginTop: 6,
-    marginBottom: 20,
+    marginTop: 20,
+    width: '100%',
     ...SHADOWS.sm,
   },
   statBox: {
@@ -659,24 +735,39 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: FONTS.heading,
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '800',
     color: COLORS.primary,
   },
   statLabel: {
     fontFamily: FONTS.family,
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '600',
     color: '#64748B',
-    marginTop: 1,
+    marginTop: 2,
   },
   statDivider: {
     width: 1,
-    height: 24,
+    height: 26,
     backgroundColor: '#E2E8F0',
   },
+  scrollIndicator: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+  },
+  scrollIndicatorText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   cardsContainer: {
-    gap: 18,
+    gap: 20,
+    paddingTop: 16,
   },
   productCard: {
     backgroundColor: '#FFFFFF',
