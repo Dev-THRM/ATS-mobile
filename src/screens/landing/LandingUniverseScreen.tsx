@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { COLORS, SHADOWS, RADIUS, FONTS } from '../../theme/theme';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface LandingUniverseScreenProps {
   navigation: any;
@@ -28,106 +28,49 @@ interface LandingUniverseScreenProps {
 export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
-  const cardsTriggered = useRef(false);
   const backboneTriggered = useRef(false);
 
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const heroSlideAnim = useRef(new Animated.Value(30)).current;
-  const statsSlideAnim = useRef(new Animated.Value(40)).current;
-  const scrollIndicatorBounce = useRef(new Animated.Value(0)).current;
-
-  // Card entrance animations (triggered on scroll)
+  // Card entrance animations (play immediately on mount)
   const cardOpacityAnim = useRef(new Animated.Value(0)).current;
-  const card1Anim = useRef(new Animated.Value(80)).current;
-  const card2Anim = useRef(new Animated.Value(100)).current;
-  const card3Anim = useRef(new Animated.Value(120)).current;
-  const bottomBarAnim = useRef(new Animated.Value(80)).current;
+  const card1Anim = useRef(new Animated.Value(40)).current;
+  const card2Anim = useRef(new Animated.Value(60)).current;
+  const card3Anim = useRef(new Animated.Value(80)).current;
+  const bottomBarAnim = useRef(new Animated.Value(100)).current;
 
   // Backbone entrance animation (triggered on scroll)
   const backboneOpacityAnim = useRef(new Animated.Value(0)).current;
-  const backboneSlideAnim = useRef(new Animated.Value(60)).current;
+  const backboneSlideAnim = useRef(new Animated.Value(40)).current;
 
   useEffect(() => {
-    // Entrance for Hero
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(heroSlideAnim, {
-        toValue: 0,
-        duration: 600,
-        easing: Easing.out(Easing.back(1.2)),
-        useNativeDriver: true,
-      }),
-      Animated.timing(statsSlideAnim, {
-        toValue: 0,
-        duration: 700,
-        delay: 150,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // Continuous Bounce for Scroll Indicator
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(scrollIndicatorBounce, {
-          toValue: 6,
-          duration: 900,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scrollIndicatorBounce, {
-          toValue: 0,
-          duration: 900,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    ).start();
-  }, []);
-
-  const triggerCardsAnimation = () => {
-    if (cardsTriggered.current) return;
-    cardsTriggered.current = true;
-
+    // Entrance animations for cards directly on load
     Animated.parallel([
       Animated.timing(cardOpacityAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 450,
         useNativeDriver: true,
       }),
-      Animated.stagger(120, [
+      Animated.stagger(100, [
         Animated.timing(card1Anim, {
           toValue: 0,
-          duration: 600,
+          duration: 550,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(card2Anim, {
           toValue: 0,
-          duration: 600,
+          duration: 550,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(card3Anim, {
           toValue: 0,
-          duration: 600,
+          duration: 550,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
-      Animated.timing(bottomBarAnim, {
-        toValue: 0,
-        duration: 500,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
     ]).start();
-  };
+  }, []);
 
   const triggerBackboneAnimation = () => {
     if (backboneTriggered.current) return;
@@ -136,12 +79,12 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
     Animated.parallel([
       Animated.timing(backboneOpacityAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 500,
         useNativeDriver: true,
       }),
       Animated.timing(backboneSlideAnim, {
         toValue: 0,
-        duration: 600,
+        duration: 500,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -150,21 +93,22 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    if (offsetY > 30) {
-      triggerCardsAnimation();
-    }
-    if (offsetY > 180) {
+    if (offsetY > 100) {
       triggerBackboneAnimation();
     }
-  };
-
-  const scrollToCards = () => {
-    triggerCardsAnimation();
-    triggerBackboneAnimation();
-    scrollViewRef.current?.scrollTo({
-      y: height - 160,
-      animated: true,
-    });
+    if (offsetY > 250) {
+      Animated.timing(bottomBarAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(bottomBarAnim, {
+        toValue: 100,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
   };
 
   const handleLaunchProduct = (product: 'ats' | 'crm' | 'hrms') => {
@@ -220,104 +164,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           end={{ x: 0.5, y: 0.55 }}
         />
 
-        {/* SECTION 1: Full-Height Initial Hero Viewport (ONLY this is visible on load) */}
-        <Animated.View
-          style={[
-            styles.heroSection,
-            {
-              minHeight: height - (Platform.OS === 'ios' ? 140 : 120),
-              opacity: fadeAnim,
-              transform: [{ translateY: heroSlideAnim }],
-            },
-          ]}
-        >
-          <View style={styles.heroCenterContent}>
-            {/* Enterprise Suite Pill Badge */}
-            <View style={styles.heroPillBadge}>
-              <View style={styles.heroPillDot} />
-              <Text style={styles.heroPillBadgeText}>Unified Enterprise Suite</Text>
-            </View>
-
-            <Text style={styles.heroTitle}>
-              One Universe.{'\n'}
-              <Text style={styles.heroHighlight}>Three Powerhouse</Text>{'\n'}
-              Platforms.
-            </Text>
-
-            <Text style={styles.heroSubtitle}>
-              The unified THRM operational ecosystem powering talent recruitment velocity, intelligent client pipelines, and workforce operations.
-            </Text>
-
-            {/* Live Metrics Ribbon */}
-            <Animated.View
-              style={[
-                styles.statsRibbon,
-                {
-                  transform: [{ translateY: statsSlideAnim }],
-                },
-              ]}
-            >
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>4x</Text>
-                <Text style={styles.statLabel}>Hiring Velocity</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>99.99%</Text>
-                <Text style={styles.statLabel}>Enterprise SLA</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statBox}>
-                <Text style={styles.statValue}>3-in-1</Text>
-                <Text style={styles.statLabel}>Zero Data Silos</Text>
-              </View>
-            </Animated.View>
-
-            {/* Hero Quick Action Touch Targets */}
-            <View style={styles.heroActionsRow}>
-              <TouchableOpacity
-                style={styles.heroExploreBtn}
-                onPress={scrollToCards}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['#1E51DA', '#1746c2']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.heroExploreGradient}
-                >
-                  <Text style={styles.heroExploreText}>Explore Platforms</Text>
-                  <Animated.View style={{ transform: [{ translateY: scrollIndicatorBounce }] }}>
-                    <Ionicons name="arrow-down" size={15} color="#FFFFFF" />
-                  </Animated.View>
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.heroSignInBtn}
-                onPress={() => handleLaunchProduct('ats')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.heroSignInBtnText}>Sign In</Text>
-                <Ionicons name="chevron-forward" size={15} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Animated Scroll Prompt Indicator */}
-          <TouchableOpacity
-            style={styles.scrollIndicator}
-            onPress={scrollToCards}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.scrollIndicatorText}>Scroll to explore</Text>
-            <Animated.View style={{ transform: [{ translateY: scrollIndicatorBounce }] }}>
-              <Ionicons name="chevron-down" size={18} color={COLORS.primary} />
-            </Animated.View>
-          </TouchableOpacity>
-        </Animated.View>
-
-        {/* SECTION 2: Product Cards Container (Equal spacing, animates in on scroll) */}
+        {/* Product Cards Container (Directly visible on load) */}
         <View style={styles.cardsContainer}>
           {/* Card 1: THRM ATS */}
           <Animated.View
@@ -776,175 +623,11 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 520,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 28,
-    paddingBottom: 16,
-    position: 'relative',
-  },
-  heroCenterContent: {
-    alignItems: 'center',
-    textAlign: 'center',
-    width: '100%',
-    paddingTop: 8,
-  },
-  heroPillBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: RADIUS.full,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 18,
-    ...SHADOWS.sm,
-  },
-  heroPillDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#1E51DA',
-  },
-  heroPillBadgeText: {
-    fontFamily: FONTS.family,
-    fontSize: 11.5,
-    fontWeight: '700',
-    color: '#1E51DA',
-    letterSpacing: 0.3,
-  },
-  heroTitle: {
-    fontFamily: FONTS.heading,
-    fontSize: 32,
-    fontWeight: '800',
-    lineHeight: 40,
-    color: '#0F172A',
-    textAlign: 'center',
-    marginBottom: 14,
-    letterSpacing: -0.6,
-  },
-  heroHighlight: {
-    color: COLORS.primary,
-  },
-  heroSubtitle: {
-    fontFamily: FONTS.family,
-    fontSize: 14,
-    color: '#475569',
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 340,
-    paddingHorizontal: 6,
-  },
-  statsRibbon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    marginTop: 24,
-    width: '100%',
-    shadowColor: '#1E51DA',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 4,
-  },
-  statBox: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontFamily: FONTS.heading,
-    fontSize: 22,
-    fontWeight: '800',
-    color: COLORS.primary,
-  },
-  statLabel: {
-    fontFamily: FONTS.family,
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    marginTop: 3,
-  },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: '#E2E8F0',
-  },
-  heroActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 24,
-    width: '100%',
-  },
-  heroExploreBtn: {
-    borderRadius: RADIUS.full,
-    overflow: 'hidden',
-    shadowColor: '#1E51DA',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  heroExploreGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 13,
-    paddingHorizontal: 22,
-  },
-  heroExploreText: {
-    fontFamily: FONTS.family,
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  heroSignInBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: RADIUS.full,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.sm,
-  },
-  heroSignInBtnText: {
-    fontFamily: FONTS.family,
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  scrollIndicator: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 8,
-    marginTop: 8,
-  },
-  scrollIndicatorText: {
-    fontFamily: FONTS.family,
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#94A3B8',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    height: 380,
   },
   cardsContainer: {
-    gap: 20,
-    marginTop: 36,
+    gap: 18,
+    paddingTop: 16,
   },
   productCard: {
     backgroundColor: '#FFFFFF',
