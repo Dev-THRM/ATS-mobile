@@ -12,6 +12,7 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +36,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
   const card1Anim = useRef(new Animated.Value(40)).current;
   const card2Anim = useRef(new Animated.Value(60)).current;
   const card3Anim = useRef(new Animated.Value(80)).current;
+  const card4Anim = useRef(new Animated.Value(100)).current;
   const bottomBarAnim = useRef(new Animated.Value(100)).current;
 
   // Backbone entrance animation (triggered on scroll)
@@ -63,6 +65,12 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           useNativeDriver: true,
         }),
         Animated.timing(card3Anim, {
+          toValue: 0,
+          duration: 550,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(card4Anim, {
           toValue: 0,
           duration: 550,
           easing: Easing.out(Easing.cubic),
@@ -111,11 +119,19 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
     }
   };
 
-  const handleLaunchProduct = (product: 'ats' | 'crm' | 'hrms') => {
+  const handleLaunchProduct = (product: 'ats' | 'crm' | 'hrms' | 'edutech') => {
+    if (product === 'edutech') {
+      Linking.openURL('https://thrmedutech.in');
+      return;
+    }
     navigation.navigate('Login', { product });
   };
 
-  const handleRegisterProduct = (product: 'ats' | 'crm' | 'hrms') => {
+  const handleRegisterProduct = (product: 'ats' | 'crm' | 'hrms' | 'edutech') => {
+    if (product === 'edutech') {
+      Linking.openURL('https://thrmedutech.in');
+      return;
+    }
     navigation.navigate('Register', { product });
   };
 
@@ -453,6 +469,103 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
                 New organization? <Text style={[styles.createOrgBold, { color: '#0D9488' }]}>Create HRMS workspace</Text>
               </Text>
               <Ionicons name="chevron-forward" size={13} color="#0D9488" />
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Card 4: THRM EduTech */}
+          <Animated.View
+            style={[
+              styles.productCard,
+              {
+                opacity: cardOpacityAnim,
+                transform: [{ translateY: card4Anim }],
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <LinearGradient
+                colors={['#7C3AED', '#6D28D9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.cardIconBox, { shadowColor: '#7C3AED' }]}
+              >
+                <Ionicons name="school" size={24} color="#FFFFFF" />
+              </LinearGradient>
+
+              <View style={[styles.categoryBadgePill, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+                <Text style={[styles.categoryBadgeText, { color: '#7C3AED' }]}>Skills & Learning</Text>
+              </View>
+            </View>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.productTitle}>THRM EduTech</Text>
+              <Text style={[styles.productSubtitle, { color: '#7C3AED' }]}>
+                Digital Marketing & Tech Education
+              </Text>
+            </View>
+
+            <Text style={styles.productDescription}>
+              Empower learners and teams with hands-on digital marketing, SEO, web development, and performance advertising through real-world agency projects.
+            </Text>
+
+            <View style={styles.capabilitiesContainer}>
+              <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F5F3FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#7C3AED" />
+                </View>
+                <Text style={styles.capabilityText}>Practical Project-First Curriculum & Mentorship</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F5F3FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#7C3AED" />
+                </View>
+                <Text style={styles.capabilityText}>Full-Stack SEO, Web Development & Viral Content</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F5F3FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#7C3AED" />
+                </View>
+                <Text style={styles.capabilityText}>Live High-ROAS Performance Ads & Analytics</Text>
+              </View>
+            </View>
+
+            <View style={[styles.metricsChip, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+              <Ionicons name="flash" size={14} color="#7C3AED" />
+              <Text style={[styles.metricsChipText, { color: '#6D28D9' }]}>
+                Practical Learning • Career Ready
+              </Text>
+            </View>
+
+            {/* Launch Button */}
+            <TouchableOpacity
+              onPress={() => handleLaunchProduct('edutech')}
+              activeOpacity={0.88}
+              style={[styles.launchButtonTouchable, { shadowColor: '#7C3AED' }]}
+            >
+              <LinearGradient
+                colors={['#7C3AED', '#6D28D9']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.launchButtonGradient}
+              >
+                <Text style={styles.launchButtonText}>Launch EduTech Workspace</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleRegisterProduct('edutech')}
+              activeOpacity={0.7}
+              style={styles.createOrgLink}
+            >
+              <Text style={styles.createOrgText}>
+                New organization? <Text style={[styles.createOrgBold, { color: '#7C3AED' }]}>Create EduTech workspace</Text>
+              </Text>
+              <Ionicons name="chevron-forward" size={13} color="#7C3AED" />
             </TouchableOpacity>
           </Animated.View>
         </View>
