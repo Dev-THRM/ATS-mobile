@@ -278,110 +278,13 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Card 2: THRM CRM */}
+          {/* Card 2: THRM HRMS */}
           <Animated.View
             style={[
               styles.productCard,
               {
                 opacity: cardOpacityAnim,
                 transform: [{ translateY: card2Anim }],
-              },
-            ]}
-          >
-            <View style={styles.cardHeaderRow}>
-              <LinearGradient
-                colors={['#0284C7', '#0369A1']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.cardIconBox, { shadowColor: '#0284C7' }]}
-              >
-                <Ionicons name="trending-up" size={24} color="#FFFFFF" />
-              </LinearGradient>
-
-              <View style={[styles.categoryBadgePill, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
-                <Text style={[styles.categoryBadgeText, { color: '#0284C7' }]}>Sales & Revenue</Text>
-              </View>
-            </View>
-
-            <View style={styles.titleRow}>
-              <Text style={styles.productTitle}>THRM CRM</Text>
-              <Text style={[styles.productSubtitle, { color: '#0284C7' }]}>
-                Customer Relationship Management
-              </Text>
-            </View>
-
-            <Text style={styles.productDescription}>
-              Intelligent client pipelines, deal velocity, lead scoring, and automated revenue growth engine.
-            </Text>
-
-            <View style={styles.capabilitiesContainer}>
-              <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
-
-              <View style={styles.capabilityRow}>
-                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
-                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
-                </View>
-                <Text style={styles.capabilityText}>Visual Deal Pipeline & Forecasting</Text>
-              </View>
-
-              <View style={styles.capabilityRow}>
-                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
-                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
-                </View>
-                <Text style={styles.capabilityText}>Real-Time Revenue Velocity Tracking</Text>
-              </View>
-
-              <View style={styles.capabilityRow}>
-                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
-                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
-                </View>
-                <Text style={styles.capabilityText}>Automated Client Follow-ups & Reminders</Text>
-              </View>
-            </View>
-
-            <View style={[styles.metricsChip, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
-              <Ionicons name="flash" size={14} color="#0284C7" />
-              <Text style={[styles.metricsChipText, { color: '#0369A1' }]}>
-                Pipeline Velocity • Deal Tracking
-              </Text>
-            </View>
-
-            {/* Launch Button */}
-            <TouchableOpacity
-              onPress={() => handleLaunchProduct('crm')}
-              activeOpacity={0.88}
-              style={[styles.launchButtonTouchable, { shadowColor: '#0284C7' }]}
-            >
-              <LinearGradient
-                colors={['#0284C7', '#0369A1']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.launchButtonGradient}
-              >
-                <Text style={styles.launchButtonText}>Launch CRM Workspace</Text>
-                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => handleRegisterProduct('crm')}
-              activeOpacity={0.7}
-              style={styles.createOrgLink}
-            >
-              <Text style={styles.createOrgText}>
-                New organization? <Text style={[styles.createOrgBold, { color: '#0284C7' }]}>Create CRM workspace</Text>
-              </Text>
-              <Ionicons name="chevron-forward" size={13} color="#0284C7" />
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* Card 3: THRM HRMS */}
-          <Animated.View
-            style={[
-              styles.productCard,
-              {
-                opacity: cardOpacityAnim,
-                transform: [{ translateY: card3Anim }],
               },
             ]}
           >
@@ -469,6 +372,103 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
                 New organization? <Text style={[styles.createOrgBold, { color: '#0D9488' }]}>Create HRMS workspace</Text>
               </Text>
               <Ionicons name="chevron-forward" size={13} color="#0D9488" />
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Card 3: THRM CRM */}
+          <Animated.View
+            style={[
+              styles.productCard,
+              {
+                opacity: cardOpacityAnim,
+                transform: [{ translateY: card3Anim }],
+              },
+            ]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <LinearGradient
+                colors={['#0284C7', '#0369A1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.cardIconBox, { shadowColor: '#0284C7' }]}
+              >
+                <Ionicons name="trending-up" size={24} color="#FFFFFF" />
+              </LinearGradient>
+
+              <View style={[styles.categoryBadgePill, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
+                <Text style={[styles.categoryBadgeText, { color: '#0284C7' }]}>Sales & Revenue</Text>
+              </View>
+            </View>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.productTitle}>THRM CRM</Text>
+              <Text style={[styles.productSubtitle, { color: '#0284C7' }]}>
+                Customer Relationship Management
+              </Text>
+            </View>
+
+            <Text style={styles.productDescription}>
+              Intelligent client pipelines, deal velocity, lead scoring, and automated revenue growth engine.
+            </Text>
+
+            <View style={styles.capabilitiesContainer}>
+              <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
+                </View>
+                <Text style={styles.capabilityText}>Visual Deal Pipeline & Forecasting</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
+                </View>
+                <Text style={styles.capabilityText}>Real-Time Revenue Velocity Tracking</Text>
+              </View>
+
+              <View style={styles.capabilityRow}>
+                <View style={[styles.checkIconBox, { backgroundColor: '#F0F9FF' }]}>
+                  <Ionicons name="checkmark-sharp" size={12} color="#0284C7" />
+                </View>
+                <Text style={styles.capabilityText}>Automated Client Follow-ups & Reminders</Text>
+              </View>
+            </View>
+
+            <View style={[styles.metricsChip, { backgroundColor: '#F0F9FF', borderColor: '#BAE6FD' }]}>
+              <Ionicons name="flash" size={14} color="#0284C7" />
+              <Text style={[styles.metricsChipText, { color: '#0369A1' }]}>
+                Pipeline Velocity • Deal Tracking
+              </Text>
+            </View>
+
+            {/* Launch Button */}
+            <TouchableOpacity
+              onPress={() => handleLaunchProduct('crm')}
+              activeOpacity={0.88}
+              style={[styles.launchButtonTouchable, { shadowColor: '#0284C7' }]}
+            >
+              <LinearGradient
+                colors={['#0284C7', '#0369A1']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.launchButtonGradient}
+              >
+                <Text style={styles.launchButtonText}>Launch CRM Workspace</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => handleRegisterProduct('crm')}
+              activeOpacity={0.7}
+              style={styles.createOrgLink}
+            >
+              <Text style={styles.createOrgText}>
+                New organization? <Text style={[styles.createOrgBold, { color: '#0284C7' }]}>Create CRM workspace</Text>
+              </Text>
+              <Ionicons name="chevron-forward" size={13} color="#0284C7" />
             </TouchableOpacity>
           </Animated.View>
 
