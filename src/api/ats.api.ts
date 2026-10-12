@@ -110,15 +110,24 @@ export const atsApi = {
       joiningDate?: string;
     },
   ): Promise<Application> => {
-    const { data } = await apiClient.patch(`/ats/applications/${applicationId}/stage`, {
+    const notesValue = (payload.customNotes || payload.notes)?.trim();
+    const body: Record<string, any> = {
       stageId: payload.stageId,
       toStageId: payload.toStageId || payload.stageId,
-      notes: payload.notes,
-      customNotes: payload.customNotes || payload.notes,
-      rejectionReason: payload.rejectionReason,
-      sendEmail: payload.sendEmail,
-      joiningDate: payload.joiningDate,
-    });
+      sendEmail: payload.sendEmail ?? false,
+    };
+    if (notesValue) {
+      body.customNotes = notesValue;
+      body.notes = notesValue;
+    }
+    if (payload.rejectionReason?.trim()) {
+      body.rejectionReason = payload.rejectionReason.trim();
+    }
+    if (payload.joiningDate?.trim()) {
+      body.joiningDate = payload.joiningDate.trim();
+    }
+
+    const { data } = await apiClient.patch(`/ats/applications/${applicationId}/stage`, body);
     return data?.application || data;
   },
 
