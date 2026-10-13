@@ -707,8 +707,8 @@ const styles = StyleSheet.create({
     ...SHADOWS.sm,
   },
   headerLogo: {
-    width: 150,
-    height: 44,
+    width: 260,
+    height: 80,
   },
   headerSignInBtn: {
     flexDirection: 'row',
@@ -976,8 +976,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerLogo: {
-    width: 145,
-    height: 42,
+    width: 260,
+    height: 80,
   },
   footerDescription: {
     fontFamily: FONTS.family,

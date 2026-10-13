@@ -390,11 +390,20 @@ const styles = StyleSheet.create({
   },
   brandContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
     marginBottom: 24,
+    backgroundColor: '#005C82',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: '#004766',
+    ...SHADOWS.sm,
   },
   brandLogo: {
-    width: 280,
-    height: 64,
+    width: 320,
+    height: 88,
   },
   card: {
     backgroundColor: '#FFFFFF',
