@@ -279,6 +279,8 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
   const [sendEmail, setSendEmail] = useState<boolean>(true);
   const [joiningDate, setJoiningDate] = useState<string>('');
   const [joiningDateError, setJoiningDateError] = useState<string | null>(null);
+  const [employmentType, setEmploymentType] = useState<'INTERNSHIP' | 'FULL_TIME'>('FULL_TIME');
+  const [letterPreviewModalVisible, setLetterPreviewModalVisible] = useState(false);
 
   // Add Candidate to Pipeline Modal State
   const [addCandidateModalVisible, setAddCandidateModalVisible] = useState(false);
@@ -347,6 +349,9 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         rejectionReason?: string;
         sendEmail?: boolean;
         joiningDate?: string;
+        employmentType?: string;
+        offerAcceptanceDate?: string;
+        compensation?: any;
       };
     }) => atsApi.updateApplicationStage(appId, payload),
     onSuccess: () => {
@@ -406,6 +411,7 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
     setTransitionNotes('');
     setRejectionReason('');
     setSendEmail(!!app.candidate?.email);
+    setEmploymentType('FULL_TIME');
 
     // Default expected date of joining to 15 days ahead
     const defaultDate = new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0];
@@ -442,6 +448,44 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
 
     setJoiningDateError(null);
 
+    const isIntern = employmentType === 'INTERNSHIP';
+    let computedOfferAcceptanceDate = '';
+    if (joiningDate.trim()) {
+      try {
+        const d = new Date(joiningDate.trim());
+        if (!isNaN(d.getTime())) {
+          d.setDate(d.getDate() + 2);
+          computedOfferAcceptanceDate = d.toISOString().split('T')[0];
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    const compensation = isIntern ? {
+      type: 'INTERNSHIP',
+      title: 'Monthly Stipend Structure',
+      grossMonthly: 7000,
+      basic: 3500,
+      hra: 1400,
+      specialAllowance: 2100,
+      professionalTax: 100,
+      insurance: 150,
+      totalDeductions: 250,
+      netInHand: 6750,
+    } : {
+      type: 'FULL_TIME',
+      title: 'Monthly Salary Structure',
+      grossMonthly: 15000,
+      basic: 7500,
+      hra: 3000,
+      specialAllowance: 4500,
+      professionalTax: 200,
+      insurance: 150,
+      totalDeductions: 350,
+      netInHand: 14650,
+    };
+
     updateStageMutation.mutate({
       appId: selectedApplication.id,
       payload: {
@@ -452,6 +496,9 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
         rejectionReason: isRejectStage ? rejectionReason.trim() : undefined,
         sendEmail: selectedApplication.candidate?.email ? sendEmail : false,
         joiningDate: isOfferStage && joiningDate.trim() ? joiningDate.trim() : undefined,
+        employmentType: isOfferStage ? employmentType : undefined,
+        offerAcceptanceDate: isOfferStage ? computedOfferAcceptanceDate : undefined,
+        compensation: isOfferStage ? compensation : undefined,
       },
     });
   };
@@ -1008,66 +1055,229 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                 })}
               </View>
 
-              {/* Offer Stage: Expected Date of Joining Prompt */}
+              {/* Offer & Hired Stage: Appointment & Compensation Setup */}
               {isTargetOfferOrHired && (
                 <View style={styles.offerPromptCard}>
                   <View style={styles.offerPromptHeader}>
-                    <Ionicons name="calendar" size={16} color="#059669" />
+                    <Ionicons name="document-text" size={17} color="#065F46" />
                     <Text style={styles.offerPromptTitle}>
-                      Expected Date of Joining <Text style={{ color: COLORS.error }}>*</Text>
+                      Offer and Appointment Letter Setup
                     </Text>
                   </View>
                   <Text style={styles.offerPromptDesc}>
-                    Specify the candidate’s start date. This will be sent directly in their formal offer letter.
+                    Configure joining date and engagement type. Remaining terms auto-fetch from candidate profile.
                   </Text>
 
-                  <TextInput
-                    style={[
-                      styles.modalInput,
-                      styles.dateInput,
-                      joiningDateError ? { borderColor: COLORS.error } : null,
-                    ]}
-                    placeholder="YYYY-MM-DD (e.g. 2026-10-06)"
-                    placeholderTextColor={COLORS.textLight}
-                    value={joiningDate}
-                    onChangeText={(val) => {
-                      setJoiningDate(val);
-                      setJoiningDateError(null);
-                    }}
-                    onFocus={pipeInputFocus}
-                  />
-
-                  {/* Quick Preset Buttons */}
-                  <View style={styles.presetsRow}>
-                    <TouchableOpacity
-                      style={styles.presetChip}
-                      onPress={() =>
-                        setJoiningDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])
-                      }
-                    >
-                      <Text style={styles.presetChipText}>+7 Days</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.presetChip}
-                      onPress={() =>
-                        setJoiningDate(new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0])
-                      }
-                    >
-                      <Text style={styles.presetChipText}>+15 Days</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.presetChip}
-                      onPress={() =>
-                        setJoiningDate(new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0])
-                      }
-                    >
-                      <Text style={styles.presetChipText}>+30 Days</Text>
-                    </TouchableOpacity>
+                  {/* Candidate Auto-Fetched Summary Badge */}
+                  <View style={styles.hiringProfileCard}>
+                    <View style={styles.hiringProfileRow}>
+                      <Text style={styles.hiringProfileLabel}>Candidate:</Text>
+                      <Text style={styles.hiringProfileValue}>
+                        {selectedApplication?.candidate?.firstName} {selectedApplication?.candidate?.lastName}
+                      </Text>
+                    </View>
+                    <View style={styles.hiringProfileRow}>
+                      <Text style={styles.hiringProfileLabel}>Role / Position:</Text>
+                      <Text style={styles.hiringProfileValue}>
+                        {selectedApplication?.job?.title || jobTitle || 'Open Position'}
+                      </Text>
+                    </View>
                   </View>
 
-                  {joiningDateError && (
-                    <Text style={styles.errorText}>{joiningDateError}</Text>
-                  )}
+                  {/* 1. Date of Joining Input */}
+                  <View style={{ marginBottom: 10 }}>
+                    <Text style={styles.hiringFieldLabel}>
+                      Date of Joining <Text style={{ color: COLORS.error }}>*</Text>
+                    </Text>
+                    <TextInput
+                      style={[
+                        styles.modalInput,
+                        styles.dateInput,
+                        joiningDateError ? { borderColor: COLORS.error } : null,
+                      ]}
+                      placeholder="YYYY-MM-DD (e.g. 2026-10-13)"
+                      placeholderTextColor={COLORS.textLight}
+                      value={joiningDate}
+                      onChangeText={(val) => {
+                        setJoiningDate(val);
+                        setJoiningDateError(null);
+                      }}
+                      onFocus={pipeInputFocus}
+                    />
+
+                    {/* Quick Preset Buttons */}
+                    <View style={styles.presetsRow}>
+                      <TouchableOpacity
+                        style={styles.presetChip}
+                        onPress={() =>
+                          setJoiningDate(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])
+                        }
+                      >
+                        <Text style={styles.presetChipText}>+7 Days</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.presetChip}
+                        onPress={() =>
+                          setJoiningDate(new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0])
+                        }
+                      >
+                        <Text style={styles.presetChipText}>+15 Days</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.presetChip}
+                        onPress={() =>
+                          setJoiningDate(new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0])
+                        }
+                      >
+                        <Text style={styles.presetChipText}>+30 Days</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {joiningDateError && (
+                      <Text style={styles.errorText}>{joiningDateError}</Text>
+                    )}
+                  </View>
+
+                  {/* 2. Engagement Type Toggle (Full-Time vs Internship) */}
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={styles.hiringFieldLabel}>
+                      Engagement Type <Text style={{ color: COLORS.error }}>*</Text>
+                    </Text>
+                    <View style={styles.typeToggleRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.typeToggleBtn,
+                          employmentType === 'FULL_TIME' && styles.typeToggleBtnActiveFull,
+                        ]}
+                        onPress={() => setEmploymentType('FULL_TIME')}
+                      >
+                        <Text
+                          style={[
+                            styles.typeToggleBtnTitle,
+                            employmentType === 'FULL_TIME' && styles.typeToggleBtnTitleActive,
+                          ]}
+                        >
+                          Full-Time
+                        </Text>
+                        <Text
+                          style={[
+                            styles.typeToggleBtnSub,
+                            employmentType === 'FULL_TIME' && styles.typeToggleBtnSubActive,
+                          ]}
+                        >
+                          ₹15,000 / mo
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[
+                          styles.typeToggleBtn,
+                          employmentType === 'INTERNSHIP' && styles.typeToggleBtnActiveIntern,
+                        ]}
+                        onPress={() => setEmploymentType('INTERNSHIP')}
+                      >
+                        <Text
+                          style={[
+                            styles.typeToggleBtnTitle,
+                            employmentType === 'INTERNSHIP' && styles.typeToggleBtnTitleActive,
+                          ]}
+                        >
+                          Internship
+                        </Text>
+                        <Text
+                          style={[
+                            styles.typeToggleBtnSub,
+                            employmentType === 'INTERNSHIP' && styles.typeToggleBtnSubActive,
+                          ]}
+                        >
+                          ₹7,000 / mo
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* 3. Acceptance of Offer Deadline Card */}
+                  <View style={styles.acceptanceDeadlineCard}>
+                    <Ionicons name="sparkles" size={14} color="#D97706" />
+                    <Text style={styles.acceptanceDeadlineText}>
+                      Signing &amp; Acceptance Deadline: 2 days after joining{' '}
+                      {joiningDate.trim()
+                        ? `(${new Date(new Date(joiningDate).getTime() + 2 * 86400000).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })})`
+                        : ''}
+                    </Text>
+                  </View>
+
+                  {/* 4. Styled Salary / Stipend Table matching Image 3 */}
+                  <View style={styles.compTableContainer}>
+                    <View style={styles.compTableHeader}>
+                      <Text style={styles.compTableHeaderText}>COMPONENT</Text>
+                      <Text style={styles.compTableHeaderText}>MONTHLY (₹)</Text>
+                    </View>
+
+                    <View style={styles.compTableRow}>
+                      <Text style={styles.compTableCellLabel}>Basic Salary</Text>
+                      <Text style={styles.compTableCellVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹3,500' : '₹7,500'}
+                      </Text>
+                    </View>
+                    <View style={[styles.compTableRow, styles.compTableRowAlt]}>
+                      <Text style={styles.compTableCellLabel}>House Rent Allowance (HRA)</Text>
+                      <Text style={styles.compTableCellVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹1,400' : '₹3,000'}
+                      </Text>
+                    </View>
+                    <View style={styles.compTableRow}>
+                      <Text style={styles.compTableCellLabel}>Special Allowance</Text>
+                      <Text style={styles.compTableCellVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹2,100' : '₹4,500'}
+                      </Text>
+                    </View>
+                    <View style={[styles.compTableRow, styles.compTableRowGross]}>
+                      <Text style={styles.compTableGrossLabel}>GROSS MONTHLY</Text>
+                      <Text style={styles.compTableGrossVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹7,000' : '₹15,000'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.compTableHeader}>
+                      <Text style={styles.compTableHeaderText}>DEDUCTIONS</Text>
+                      <Text style={styles.compTableHeaderText}>MONTHLY (₹)</Text>
+                    </View>
+                    <View style={styles.compTableRow}>
+                      <Text style={styles.compTableCellLabel}>Professional Tax (PT)</Text>
+                      <Text style={styles.compTableCellVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹100' : '₹200'}
+                      </Text>
+                    </View>
+                    <View style={[styles.compTableRow, styles.compTableRowAlt]}>
+                      <Text style={styles.compTableCellLabel}>Insurance Deduction</Text>
+                      <Text style={styles.compTableCellVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹150' : '₹150'}
+                      </Text>
+                    </View>
+                    <View style={[styles.compTableRow, styles.compTableRowGross]}>
+                      <Text style={styles.compTableGrossLabel}>TOTAL DEDUCTIONS</Text>
+                      <Text style={styles.compTableGrossVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹250' : '₹350'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.compTableNetRow}>
+                      <Text style={styles.compTableNetLabel}>NET IN-HAND SALARY</Text>
+                      <Text style={styles.compTableNetVal}>
+                        {employmentType === 'INTERNSHIP' ? '₹6,750 / mo' : '₹14,650 / mo'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* 5. Button to Preview Full Official Letter */}
+                  <TouchableOpacity
+                    style={styles.previewLetterBtn}
+                    onPress={() => setLetterPreviewModalVisible(true)}
+                  >
+                    <Ionicons name="document-text-outline" size={15} color="#FFFFFF" />
+                    <Text style={styles.previewLetterBtnText}>Preview Official Appointment Letter</Text>
+                  </TouchableOpacity>
                 </View>
               )}
 
@@ -1140,6 +1350,170 @@ export const JobPipelineScreen: React.FC<{ route: any; navigation: any }> = ({
                 ) : (
                   <Text style={styles.confirmBtnText}>Confirm Move</Text>
                 )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Appointment Letter Preview Modal (Mobile) */}
+      <Modal
+        visible={letterPreviewModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setLetterPreviewModalVisible(false)}
+        statusBarTranslucent
+      >
+        <View style={styles.letterModalOverlay}>
+          <View style={styles.letterModalContainer}>
+            <View style={styles.letterModalHeader}>
+              <View>
+                <Text style={styles.letterModalTitle}>Offer and Appointment letter</Text>
+                <Text style={styles.letterModalSubtitle}>
+                  THRM Digital Marketing Agency &bull; {employmentType === 'INTERNSHIP' ? 'Internship (₹7,000)' : 'Full-Time (₹15,000)'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setLetterPreviewModalVisible(false)}
+                style={styles.letterCloseBtn}
+              >
+                <Ionicons name="close" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.letterModalScroll} showsVerticalScrollIndicator>
+              {/* PAGE 1 CONTENT */}
+              <View style={styles.letterPageCard}>
+                <View style={styles.letterAgencyHeader}>
+                  <View>
+                    <Text style={styles.letterAgencyName}>THRM</Text>
+                    <Text style={styles.letterAgencyTag}>Digital Marketing Agency</Text>
+                  </View>
+                  <View style={styles.letterAgencyContactCol}>
+                    <Text style={styles.letterAgencyContactText}>+91-9004500657 / 9665220569</Text>
+                    <Text style={styles.letterAgencyContactText}>hr@thrmdigitalmarketing.in</Text>
+                    <Text style={styles.letterAgencyContactText}>www.thrmdigitalmarketing.in</Text>
+                    <Text style={styles.letterAgencyContactText}>Mumbai Fort &amp; Kalyan, West</Text>
+                  </View>
+                </View>
+
+                <View style={styles.letterHeadingBox}>
+                  <Text style={styles.letterHeadingText}>Offer and Appointment letter</Text>
+                </View>
+
+                <Text style={styles.letterRecipient}>
+                  To, {selectedApplication?.candidate?.firstName} {selectedApplication?.candidate?.lastName}
+                </Text>
+                <Text style={styles.letterSubject}>
+                  Subject: Appointment as {selectedApplication?.job?.title || jobTitle || 'Job Opening'}
+                </Text>
+
+                <Text style={styles.letterBodyPara}>
+                  Dear {selectedApplication?.candidate?.firstName || 'Candidate'},
+                </Text>
+                <Text style={styles.letterBodyPara}>
+                  We are pleased to offer you the position of {selectedApplication?.job?.title || jobTitle || 'Position'} at THRM Digital Marketing Agency. We are confident that your skills and expertise will make a significant contribution to the growth and success of our organization.
+                </Text>
+
+                <Text style={[styles.letterSectionHeading, { marginTop: 10 }]}>Below are the details of your appointment:</Text>
+
+                <Text style={styles.letterClauseTitle}>1. Designation and Reporting</Text>
+                <Text style={styles.letterBodyPara}>
+                  You will be appointed as a {selectedApplication?.job?.title || jobTitle || 'Position'} and will report to the CEO, Director, or Technology Manager. Your primary responsibility will be to lead and Manage Web Projects and solutions for our clients.
+                </Text>
+
+                <Text style={styles.letterClauseTitle}>2. Date of Joining</Text>
+                <Text style={styles.letterBodyPara}>
+                  Your date of joining will be <Text style={{ fontWeight: '700', color: '#065F46' }}>{joiningDate || 'As communicated'}</Text>.
+                </Text>
+
+                <Text style={styles.letterClauseTitle}>3. Working Hours</Text>
+                <Text style={styles.letterBodyPara}>
+                  Your official working hours will be 10:30 AM to 7:00 PM, Monday to Saturday. You are entitled to a 1-hour break during the day.
+                </Text>
+
+                <Text style={styles.letterClauseTitle}>4. Compensation</Text>
+                <Text style={styles.letterBodyPara}>
+                  &bull; {employmentType === 'INTERNSHIP' ? 'Stipend' : 'Salary'}: INR {employmentType === 'INTERNSHIP' ? '7,000 (Seven Thousand)' : '15,000 (Fifteen Thousand)'} per month.
+                </Text>
+                <Text style={styles.letterBodyPara}>
+                  &bull; Salary Review: After a period of 6 months, your salary will be reviewed based on the company's revenue and performance metrics.
+                </Text>
+                <Text style={styles.letterBodyPara}>
+                  &bull; Salary Date: Your monthly salary will be credited to your designated account in between of 7th to 10th of every month.
+                </Text>
+
+                {/* Acceptance of Offer */}
+                <View style={styles.acceptanceCalloutBox}>
+                  <Text style={styles.acceptanceCalloutTitle}>9. Acceptance of Offer</Text>
+                  <Text style={styles.acceptanceCalloutText}>
+                    Please sign and return a copy of this letter by <Text style={{ fontWeight: '700' }}>15th of the month</Text> to confirm your acceptance of the terms and conditions outlined above.
+                  </Text>
+                </View>
+
+                {/* Compensation Table */}
+                <Text style={[styles.letterSectionHeading, { marginTop: 14 }]}>Compensation &amp; Stipend Structure</Text>
+                <View style={[styles.compTableContainer, { marginTop: 6 }]}>
+                  <View style={styles.compTableHeader}>
+                    <Text style={styles.compTableHeaderText}>COMPONENT</Text>
+                    <Text style={styles.compTableHeaderText}>MONTHLY (₹)</Text>
+                  </View>
+                  <View style={styles.compTableRow}>
+                    <Text style={styles.compTableCellLabel}>Basic Salary</Text>
+                    <Text style={styles.compTableCellVal}>{employmentType === 'INTERNSHIP' ? '₹3,500' : '₹7,500'}</Text>
+                  </View>
+                  <View style={[styles.compTableRow, styles.compTableRowAlt]}>
+                    <Text style={styles.compTableCellLabel}>House Rent Allowance (HRA)</Text>
+                    <Text style={styles.compTableCellVal}>{employmentType === 'INTERNSHIP' ? '₹1,400' : '₹3,000'}</Text>
+                  </View>
+                  <View style={styles.compTableRow}>
+                    <Text style={styles.compTableCellLabel}>Special Allowance</Text>
+                    <Text style={styles.compTableCellVal}>{employmentType === 'INTERNSHIP' ? '₹2,100' : '₹4,500'}</Text>
+                  </View>
+                  <View style={[styles.compTableRow, styles.compTableRowGross]}>
+                    <Text style={styles.compTableGrossLabel}>GROSS MONTHLY SALARY</Text>
+                    <Text style={styles.compTableGrossVal}>{employmentType === 'INTERNSHIP' ? '₹7,000' : '₹15,000'}</Text>
+                  </View>
+
+                  <View style={styles.compTableHeader}>
+                    <Text style={styles.compTableHeaderText}>DEDUCTIONS</Text>
+                    <Text style={styles.compTableHeaderText}>MONTHLY (₹)</Text>
+                  </View>
+                  <View style={styles.compTableRow}>
+                    <Text style={styles.compTableCellLabel}>Professional Tax (PT)</Text>
+                    <Text style={styles.compTableCellVal}>{employmentType === 'INTERNSHIP' ? '₹100' : '₹200'}</Text>
+                  </View>
+                  <View style={[styles.compTableRow, styles.compTableRowAlt]}>
+                    <Text style={styles.compTableCellLabel}>Insurance Deduction</Text>
+                    <Text style={styles.compTableCellVal}>{employmentType === 'INTERNSHIP' ? '₹150' : '₹150'}</Text>
+                  </View>
+                  <View style={[styles.compTableRow, styles.compTableRowGross]}>
+                    <Text style={styles.compTableGrossLabel}>TOTAL DEDUCTIONS</Text>
+                    <Text style={styles.compTableGrossVal}>{employmentType === 'INTERNSHIP' ? '₹250' : '₹350'}</Text>
+                  </View>
+
+                  <View style={styles.compTableNetRow}>
+                    <Text style={styles.compTableNetLabel}>NET IN-HAND SALARY</Text>
+                    <Text style={styles.compTableNetVal}>{employmentType === 'INTERNSHIP' ? '₹6,750 / mo' : '₹14,650 / mo'}</Text>
+                  </View>
+                </View>
+
+                {/* Signatory */}
+                <View style={styles.letterSignatoryBox}>
+                  <Text style={styles.letterSignatoryName}>Gunjan Shidame</Text>
+                  <Text style={styles.letterSignatoryRole}>Co-Founder &amp; CMO</Text>
+                  <Text style={styles.letterSignatoryCompany}>THRM Business Solution OPC Pvt. Ltd.</Text>
+                  <Text style={styles.letterSignatoryContact}>+91-7208105292 &bull; www.thrmdigitalmarketing.in</Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.letterModalFooter}>
+              <TouchableOpacity
+                style={styles.letterDismissBtn}
+                onPress={() => setLetterPreviewModalVisible(false)}
+              >
+                <Text style={styles.letterDismissBtnText}>Close Preview</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -2142,6 +2516,400 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 13,
     fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // =========================================================================
+  // HIRING & APPOINTMENT LETTER STYLES (MOBILE)
+  // =========================================================================
+  hiringProfileCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: RADIUS.sm,
+    padding: 10,
+    marginBottom: 10,
+  },
+  hiringProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  hiringProfileLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#065F46',
+    fontWeight: '600',
+  },
+  hiringProfileValue: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#064E3B',
+    fontWeight: '700',
+  },
+  hiringFieldLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#065F46',
+    marginBottom: 4,
+  },
+  typeToggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  typeToggleBtn: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    borderRadius: RADIUS.sm,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeToggleBtnActiveFull: {
+    backgroundColor: '#2563EB',
+    borderColor: '#1D4ED8',
+  },
+  typeToggleBtnActiveIntern: {
+    backgroundColor: '#059669',
+    borderColor: '#047857',
+  },
+  typeToggleBtnTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  typeToggleBtnTitleActive: {
+    color: '#FFFFFF',
+  },
+  typeToggleBtnSub: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 1,
+  },
+  typeToggleBtnSubActive: {
+    color: '#E2E8F0',
+  },
+  acceptanceDeadlineCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  acceptanceDeadlineText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#92400E',
+    flex: 1,
+  },
+  compTableContainer: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: RADIUS.sm,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  compTableHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#832729',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  compTableHeaderText: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+  },
+  compTableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  compTableRowAlt: {
+    backgroundColor: '#FAFAFA',
+  },
+  compTableCellLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#334155',
+  },
+  compTableCellVal: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  compTableRowGross: {
+    backgroundColor: '#F5EBE6',
+    borderTopWidth: 1,
+    borderTopColor: '#832729',
+    paddingVertical: 6,
+  },
+  compTableGrossLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#832729',
+  },
+  compTableGrossVal: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#832729',
+  },
+  compTableNetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FDF2F2',
+    borderTopWidth: 2,
+    borderTopColor: '#832729',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  compTableNetLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#832729',
+  },
+  compTableNetVal: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#832729',
+  },
+  previewLetterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#0F172A',
+    borderRadius: RADIUS.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  previewLetterBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  // Appointment Letter Full Modal Styles
+  letterModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    justifyContent: 'flex-end',
+  },
+  letterModalContainer: {
+    backgroundColor: '#F1F5F9',
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+    height: '92%',
+  },
+  letterModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+  },
+  letterModalTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  letterModalSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 2,
+  },
+  letterCloseBtn: {
+    padding: 6,
+    borderRadius: RADIUS.xs,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  letterModalScroll: {
+    padding: 12,
+  },
+  letterPageCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.md,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+  },
+  letterAgencyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingBottom: 10,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#0F172A',
+    marginBottom: 12,
+  },
+  letterAgencyName: {
+    fontFamily: FONTS.family,
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  letterAgencyTag: {
+    fontFamily: FONTS.family,
+    fontSize: 9.5,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+  },
+  letterAgencyContactCol: {
+    alignItems: 'flex-end',
+  },
+  letterAgencyContactText: {
+    fontFamily: FONTS.family,
+    fontSize: 9,
+    color: '#64748B',
+    lineHeight: 12,
+  },
+  letterHeadingBox: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  letterHeadingText: {
+    fontFamily: FONTS.family,
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: 1,
+  },
+  letterRecipient: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  letterSubject: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 8,
+  },
+  letterBodyPara: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#334155',
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  letterSectionHeading: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  letterClauseTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  acceptanceCalloutBox: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: RADIUS.sm,
+    padding: 10,
+    marginVertical: 10,
+  },
+  acceptanceCalloutTitle: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#92400E',
+    marginBottom: 3,
+  },
+  acceptanceCalloutText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#78350F',
+    lineHeight: 15,
+  },
+  letterSignatoryBox: {
+    marginTop: 14,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  letterSignatoryName: {
+    fontFamily: FONTS.family,
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  letterSignatoryRole: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    color: '#64748B',
+  },
+  letterSignatoryCompany: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 1,
+  },
+  letterSignatoryContact: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  letterModalFooter: {
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  letterDismissBtn: {
+    height: 42,
+    borderRadius: RADIUS.sm,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  letterDismissBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
 });

@@ -108,6 +108,9 @@ export const atsApi = {
       rejectionReason?: string;
       sendEmail?: boolean;
       joiningDate?: string;
+      employmentType?: string;
+      offerAcceptanceDate?: string;
+      compensation?: any;
     },
   ): Promise<Application> => {
     const notesValue = (payload.customNotes || payload.notes)?.trim();
@@ -125,6 +128,15 @@ export const atsApi = {
     }
     if (payload.joiningDate?.trim()) {
       body.joiningDate = payload.joiningDate.trim();
+    }
+    if (payload.employmentType) {
+      body.employmentType = payload.employmentType;
+    }
+    if (payload.offerAcceptanceDate) {
+      body.offerAcceptanceDate = payload.offerAcceptanceDate;
+    }
+    if (payload.compensation) {
+      body.compensation = payload.compensation;
     }
 
     const { data } = await apiClient.patch(`/ats/applications/${applicationId}/stage`, body);
