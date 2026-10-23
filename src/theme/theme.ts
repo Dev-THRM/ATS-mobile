@@ -1,16 +1,21 @@
 import { Platform } from 'react-native';
 
 export const COLORS = {
-  // THRM Universe Primary Brand (#1E51DA)
-  primary: '#1E51DA',
-  primaryHover: '#1746c2',
-  primaryLight: '#EFF6FF',
-  primaryLighter: '#F8FAFC',
-  primaryDark: '#0f308a',
+  // THRM Universe Signature London Blue (#005C82)
+  primary: '#005C82',
+  primaryHover: '#004766',
+  primaryLight: '#E8F3FA',
+  primaryLighter: '#F2F8FC',
+  primaryDark: '#003B54',
 
-  // Secondary Accents
-  accent: '#1E51DA',
-  accentLight: '#EFF6FF',
+  // Secondary Accents & Tones
+  accent: '#005C82',
+  accentLight: '#E8F3FA',
+  londonBlue: '#005C82',
+  londonBlueDark: '#004766',
+  londonBlueDeep: '#002D42',
+  londonBlueLight: '#E8F3FA',
+  londonBlueSky: '#BAE6FD',
   teal: '#0D9488',
   tealLight: '#F0FDFA',
 
@@ -21,28 +26,28 @@ export const COLORS = {
   warningLight: '#FFFBEB',
   error: '#DC2626', // Red 600
   errorLight: '#FEF2F2',
-  info: '#1E51DA',
-  infoLight: '#EFF6FF',
+  info: '#005C82',
+  infoLight: '#E8F3FA',
 
-  // Surfaces & Backgrounds (Crisp Light Slate & White)
-  background: '#F8FAFC',
+  // Surfaces & Backgrounds
+  background: '#F4F9FD',
   surface: '#FFFFFF',
-  surfaceSecondary: '#F0F7FF', // Soft ice blue
+  surfaceSecondary: '#E8F3FA',
   surfaceTertiary: '#E2E8F0',
   surfaceCard: '#FFFFFF',
 
-  // Text Hierarchy (Clean, balanced contrast)
-  textPrimary: '#1E293B', // Slate 800 (softer than harsh black)
-  textSecondary: '#475569', // Slate 600
-  textMuted: '#64748B', // Slate 500
+  // Text Hierarchy
+  textPrimary: '#002D42', // Deep London Blue navy
+  textSecondary: '#475569',
+  textMuted: '#64748B',
   textLight: '#94A3B8',
   textInverse: '#FFFFFF',
 
   // Borders & Dividers
   border: '#E2E8F0',
   borderLight: '#F1F5F9',
-  borderSky: '#BFDBFE',
-  borderFocus: '#1E51DA',
+  borderSky: '#BAE6FD',
+  borderFocus: '#005C82',
 };
 
 export const FONTS = {
@@ -71,38 +76,38 @@ export const SHADOWS = {
   none: {},
   sm: Platform.select({
     web: {
-      boxShadow: '0 1px 3px 0 rgba(30, 81, 218, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
+      boxShadow: '0 1px 3px 0 rgba(0, 92, 130, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)',
     },
     default: {
-      shadowColor: '#1E51DA',
+      shadowColor: '#005C82',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.06,
+      shadowOpacity: 0.08,
       shadowRadius: 3,
-      elevation: 1,
+      elevation: 2,
     },
   }),
   md: Platform.select({
     web: {
-      boxShadow: '0 4px 6px -1px rgba(30, 81, 218, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
+      boxShadow: '0 4px 6px -1px rgba(0, 92, 130, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.04)',
     },
     default: {
-      shadowColor: '#1E51DA',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 5,
-      elevation: 2,
+      shadowColor: '#005C82',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+      elevation: 3,
     },
   }),
   lg: Platform.select({
     web: {
-      boxShadow: '0 10px 15px -3px rgba(30, 81, 218, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
+      boxShadow: '0 10px 15px -3px rgba(0, 92, 130, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
     },
     default: {
-      shadowColor: '#1E51DA',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowColor: '#005C82',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.16,
+      shadowRadius: 10,
+      elevation: 5,
     },
   }),
 };

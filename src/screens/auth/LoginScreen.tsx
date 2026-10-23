@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -31,11 +31,12 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | 'slug' | null>(null);
   const [currentServerUrl, setCurrentServerUrl] = useState<string>(API_BASE_URL);
   const [workspacesList, setWorkspacesList] = useState<Array<{ id: string; name: string; slug: string }>>([]);
 
   // Forgot password modal state
-  const { keyboardHeight: forgotKbHeight, maxModalHeight: forgotMaxHeight, onInputFocus: forgotInputFocus } = useKeyboardShift();
+  const { keyboardHeight: forgotKbHeight, onInputFocus: forgotInputFocus } = useKeyboardShift();
   const [isForgotModalVisible, setIsForgotModalVisible] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSlug, setForgotSlug] = useState('');
@@ -82,7 +83,6 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
       });
       setWorkspacesList([]);
     } catch (err: any) {
-      // If local connection timed out or network error, automatically switch to alternate server and retry!
       const isNetworkIssue =
         err.code === 'ECONNABORTED' ||
         err.message?.includes('timeout') ||
@@ -125,54 +125,83 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 
   return (
     <View style={styles.screenWrapper}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
+
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
             {
-              paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 47 : 24) + 16,
-              paddingBottom: Math.max(insets.bottom, 20),
+              paddingBottom: Math.max(insets.bottom, 24) + 20,
             },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.cardContainer}>
-            {/* Back to Universe */}
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.navigate('Landing')}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-back" size={16} color={COLORS.primary} />
-              <Text style={styles.backButtonText}>THRM Universe</Text>
-            </TouchableOpacity>
+          {/* Top London Blue Hero Header */}
+          <LinearGradient
+            colors={['#004766', '#005C82', '#006B96']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.heroHeader,
+              {
+                paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 44 : 16) + 12,
+              },
+            ]}
+          >
+            {/* Top Navigation Row */}
+            <View style={styles.heroNavRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.navigate('Landing')}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-back" size={16} color="#BAE6FD" />
+                <Text style={styles.backButtonText}>THRM Universe</Text>
+              </TouchableOpacity>
 
-            {/* Brand Header */}
-            <View style={styles.brandContainer}>
-              <Image
-                source={require('../../../assets/thrm-universe-logo.png')}
-                style={styles.brandLogo}
-                resizeMode="contain"
-              />
+              <View style={styles.heroBadge}>
+                <View style={styles.pulseDot} />
+                <Text style={styles.heroBadgeText}>ATS WORKSPACE</Text>
+              </View>
             </View>
 
-            {/* Form Card (Light Blue & White Theme) */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Sign in to your organization</Text>
+            {/* Prominent Astronaut Logo & Hero Pitch */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../../../assets/thrm-universe-logo-v2.png')}
+                style={styles.heroLogo}
+                resizeMode="contain"
+              />
+              <Text style={styles.heroSubtitle}>
+                Unified Enterprise Recruitment &amp; Operational Platform
+              </Text>
+            </View>
+          </LinearGradient>
 
+          {/* Form Card Area */}
+          <View style={styles.cardContainer}>
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>Sign in to your organization</Text>
+                <Text style={styles.cardSubtitle}>
+                  Enter your credentials to access your candidate pipeline.
+                </Text>
+              </View>
+
+              {/* Error Alert */}
               {error ? (
                 <View style={styles.errorBanner}>
-                  <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+                  <Ionicons name="alert-circle" size={18} color="#DC2626" />
                   <Text style={styles.errorText}>{error}</Text>
                 </View>
               ) : null}
 
-              {/* Workspace Selector when multiple workspaces exist for this email */}
+              {/* Workspace Selector when multiple workspaces exist for email */}
               {workspacesList.length > 0 && (
                 <View style={styles.workspacePickerContainer}>
                   <Text style={styles.workspacePickerTitle}>Select Workspace to Sign In:</Text>
@@ -189,47 +218,87 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="business" size={16} color={COLORS.primary} />
-                      <View style={{ flex: 1, marginLeft: 8 }}>
+                      <View style={styles.workspaceItemIcon}>
+                        <Ionicons name="business" size={16} color="#005C82" />
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={styles.workspaceItemName}>{ws.name}</Text>
                         <Text style={styles.workspaceItemSlug}>slug: {ws.slug}</Text>
                       </View>
-                      <Ionicons name="arrow-forward-circle" size={20} color={COLORS.primary} />
+                      <Ionicons name="arrow-forward-circle" size={20} color="#005C82" />
                     </TouchableOpacity>
                   ))}
                 </View>
               )}
 
-              {/* Work Email */}
+              {/* Work Email Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Work Email</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                <Text style={styles.inputLabel}>WORK EMAIL</Text>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === 'email' && styles.inputWrapperFocused,
+                  ]}
+                >
+                  <Ionicons
+                    name="mail-outline"
+                    size={17}
+                    color={focusedField === 'email' ? '#005C82' : '#94A3B8'}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="recruiter@company.com"
-                    placeholderTextColor={COLORS.textLight}
+                    placeholderTextColor="#94A3B8"
                     autoCapitalize="none"
                     keyboardType="email-address"
                     autoCorrect={false}
                     value={email}
                     onChangeText={setEmail}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </View>
               </View>
 
-              {/* Password */}
+              {/* Password Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Password</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                <View style={styles.passwordLabelRow}>
+                  <Text style={styles.inputLabel}>PASSWORD</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setForgotEmail(email);
+                      setForgotSlug(orgSlug);
+                      setForgotError(null);
+                      setForgotSuccess(null);
+                      setIsForgotModalVisible(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.forgotText}>Forgot password?</Text>
+                  </TouchableOpacity>
+                </View>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === 'password' && styles.inputWrapperFocused,
+                  ]}
+                >
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={17}
+                    color={focusedField === 'password' ? '#005C82' : '#94A3B8'}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="••••••••"
-                    placeholderTextColor={COLORS.textLight}
+                    placeholderTextColor="#94A3B8"
                     secureTextEntry={!showPassword}
                     value={password}
                     onChangeText={setPassword}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={() => setFocusedField(null)}
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
@@ -237,64 +306,67 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
                   >
                     <Ionicons
                       name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={16}
-                      color={COLORS.textMuted}
+                      size={18}
+                      color="#005C82"
                     />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* Forgot Password Link */}
-              <View style={styles.forgotRow}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setForgotEmail(email);
-                    setForgotSlug(orgSlug);
-                    setForgotError(null);
-                    setForgotSuccess(null);
-                    setIsForgotModalVisible(true);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.forgotText}>Forgot password?</Text>
-                </TouchableOpacity>
-              </View>
-
               {/* Organization Slug (Optional) */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
-                <View style={styles.inputWrapper}>
-                  <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
+                <Text style={styles.inputLabel}>ORGANIZATION SLUG (OPTIONAL)</Text>
+                <View
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === 'slug' && styles.inputWrapperFocused,
+                  ]}
+                >
+                  <Ionicons
+                    name="business-outline"
+                    size={17}
+                    color={focusedField === 'slug' ? '#005C82' : '#94A3B8'}
+                    style={styles.inputIcon}
+                  />
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. thrm-digital-marketing-agency"
-                    placeholderTextColor={COLORS.textLight}
+                    placeholderTextColor="#94A3B8"
                     autoCapitalize="none"
                     autoCorrect={false}
                     value={orgSlug}
                     onChangeText={setOrgSlug}
+                    onFocus={() => setFocusedField('slug')}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </View>
               </View>
 
-              {/* Login Button */}
+              {/* London Blue Sign In Button */}
               <TouchableOpacity
-                style={[styles.loginButton, isLoading && styles.disabledButton]}
+                style={[styles.loginButtonTouchable, isLoading && styles.disabledButton]}
                 onPress={() => handleLogin()}
                 disabled={isLoading}
-                activeOpacity={0.8}
+                activeOpacity={0.88}
               >
-                {isLoading ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <View style={styles.buttonInner}>
-                    <Text style={styles.loginButtonText}>Sign In</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 5 }} />
-                  </View>
-                )}
+                <LinearGradient
+                  colors={['#005C82', '#004766']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.loginButtonGradient}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <View style={styles.buttonInner}>
+                      <Text style={styles.loginButtonText}>Sign In to Workspace</Text>
+                      <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                    </View>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
 
-              {/* Register Link */}
+              {/* Register Prompt */}
               <View style={styles.registerPromptRow}>
                 <Text style={styles.registerPromptText}>Don't have a workspace? </Text>
                 <TouchableOpacity
@@ -304,6 +376,14 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
                   <Text style={styles.registerLinkText}>Register here</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+
+            {/* Bottom Security Assurance */}
+            <View style={styles.securityBadgeRow}>
+              <Ionicons name="shield-checkmark" size={14} color="#005C82" />
+              <Text style={styles.securityBadgeText}>
+                Enterprise Multi-Tenant Isolated &amp; End-to-End Encrypted
+              </Text>
             </View>
           </View>
 
@@ -321,93 +401,91 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
                 activeOpacity={1}
                 onPress={() => setIsForgotModalVisible(false)}
               />
-              <View style={[styles.modalCard, { maxHeight: forgotMaxHeight }]}>
+              <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
                   <View style={styles.modalHeaderIcon}>
-                    <Ionicons name="key-outline" size={20} color={COLORS.primary} />
+                    <Ionicons name="key-outline" size={20} color="#005C82" />
                   </View>
-                  <Text style={styles.modalTitle}>Reset Password</Text>
-                  <TouchableOpacity
-                    onPress={() => setIsForgotModalVisible(false)}
-                    style={styles.modalCloseButton}
-                  >
-                    <Ionicons name="close" size={20} color={COLORS.textMuted} />
-                  </TouchableOpacity>
+                  <Text style={styles.modalTitle}>Reset Workspace Password</Text>
+                  <Text style={styles.modalSub}>
+                    Enter your work email address and we'll send you an encrypted password reset link.
+                  </Text>
                 </View>
 
-                <Text style={styles.modalSubtitle}>
-                  Enter your work email address to receive password reset instructions.
-                </Text>
-
                 {forgotSuccess ? (
-                  <View style={styles.successBanner}>
-                    <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
-                    <Text style={styles.successText}>{forgotSuccess}</Text>
+                  <View style={styles.modalSuccessBanner}>
+                    <Ionicons name="checkmark-circle" size={18} color="#059669" />
+                    <Text style={styles.modalSuccessText}>{forgotSuccess}</Text>
                   </View>
                 ) : null}
 
                 {forgotError ? (
-                  <View style={styles.errorBanner}>
-                    <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
-                    <Text style={styles.errorText}>{forgotError}</Text>
+                  <View style={styles.modalErrorBanner}>
+                    <Ionicons name="alert-circle" size={18} color="#DC2626" />
+                    <Text style={styles.modalErrorText}>{forgotError}</Text>
                   </View>
                 ) : null}
 
-                {!forgotSuccess ? (
-                  <>
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Work Email</Text>
-                      <View style={styles.inputWrapper}>
-                        <Ionicons name="mail-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="you@company.com"
-                          placeholderTextColor={COLORS.textLight}
-                          autoCapitalize="none"
-                          keyboardType="email-address"
-                          value={forgotEmail}
-                          onChangeText={setForgotEmail}
-                          onFocus={forgotInputFocus}
-                        />
-                      </View>
-                    </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>WORK EMAIL</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="mail-outline" size={16} color="#005C82" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="recruiter@company.com"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      value={forgotEmail}
+                      onChangeText={setForgotEmail}
+                      onFocus={forgotInputFocus}
+                    />
+                  </View>
+                </View>
 
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Organization Slug (Optional)</Text>
-                      <View style={styles.inputWrapper}>
-                        <Ionicons name="business-outline" size={16} color={COLORS.textLight} style={styles.inputIcon} />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="acme-corp"
-                          placeholderTextColor={COLORS.textLight}
-                          autoCapitalize="none"
-                          value={forgotSlug}
-                          onChangeText={setForgotSlug}
-                          onFocus={forgotInputFocus}
-                        />
-                      </View>
-                    </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>WORKSPACE SLUG (OPTIONAL)</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="business-outline" size={16} color="#005C82" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. thrm-digital-marketing-agency"
+                      placeholderTextColor="#94A3B8"
+                      autoCapitalize="none"
+                      value={forgotSlug}
+                      onChangeText={setForgotSlug}
+                      onFocus={forgotInputFocus}
+                    />
+                  </View>
+                </View>
 
-                    <TouchableOpacity
-                      style={[styles.loginButton, forgotLoading && styles.disabledButton]}
-                      onPress={handleForgotPassword}
-                      disabled={forgotLoading}
-                    >
-                      {forgotLoading ? (
-                        <ActivityIndicator color="#FFFFFF" size="small" />
-                      ) : (
-                        <Text style={styles.loginButtonText}>Send Reset Link</Text>
-                      )}
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.loginButton}
-                    onPress={() => setIsForgotModalVisible(false)}
+                <TouchableOpacity
+                  style={[styles.modalSubmitButton, forgotLoading && styles.disabledButton]}
+                  onPress={handleForgotPassword}
+                  disabled={forgotLoading}
+                  activeOpacity={0.88}
+                >
+                  <LinearGradient
+                    colors={['#005C82', '#004766']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.modalSubmitGradient}
                   >
-                    <Text style={styles.loginButtonText}>Back to Sign In</Text>
-                  </TouchableOpacity>
-                )}
+                    {forgotLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.modalSubmitText}>Send Reset Link</Text>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.modalCancelButton}
+                  onPress={() => setIsForgotModalVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.modalCancelText}>Close</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </Modal>
@@ -420,313 +498,431 @@ export const LoginScreen: React.FC<any> = ({ navigation }) => {
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F9FD',
   },
-  container: {
+  keyboardContainer: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 20,
-    alignItems: 'center',
   },
-  cardContainer: {
-    width: '100%',
-    maxWidth: 420,
+
+  /* London Blue Hero Header */
+  heroHeader: {
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    borderBottomWidth: 1,
+    borderBottomColor: '#004766',
+  },
+  heroNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 18,
   },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    alignSelf: 'flex-start',
-    marginBottom: 14,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: RADIUS.full,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
   },
   backButtonText: {
     fontFamily: FONTS.family,
     fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary,
+    fontWeight: '700',
+    color: '#E0F2FE',
   },
-  brandContainer: {
+  heroBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 24,
-    backgroundColor: '#005C82',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: RADIUS.xl,
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderWidth: 1,
-    borderColor: '#004766',
-    ...SHADOWS.sm,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
-  brandLogo: {
-    width: 320,
-    height: 88,
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#38BDF8',
+  },
+  heroBadgeText: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  heroLogo: {
+    width: 220,
+    height: 62,
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#BAE6FD',
+    textAlign: 'center',
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
+
+  /* Card Container */
+  cardContainer: {
+    marginTop: -16,
+    paddingHorizontal: 16,
   },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
-    padding: 24,
+    padding: 22,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.md,
+    borderColor: 'rgba(0, 92, 130, 0.16)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#005C82',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  cardHeader: {
+    marginBottom: 20,
   },
   cardTitle: {
-    fontFamily: FONTS.family,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
-    marginBottom: 16,
+    fontFamily: FONTS.heading,
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#002D42',
+    letterSpacing: -0.3,
+    marginBottom: 4,
   },
+  cardSubtitle: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
+  },
+
   errorBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.errorLight,
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FECACA',
-    borderRadius: RADIUS.sm,
-    padding: 10,
-    marginBottom: 14,
-  },
-  errorText: {
-    fontFamily: FONTS.family,
-    color: COLORS.error,
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 6,
-    flex: 1,
-  },
-  inputGroup: {
-    marginBottom: 14,
-  },
-  inputLabel: {
-    fontFamily: FONTS.family,
-    fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.textPrimary,
-    marginBottom: 5,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: RADIUS.md,
-    paddingHorizontal: 12,
-  },
-  inputIcon: {
-    marginRight: 6,
-  },
-  input: {
-    fontFamily: FONTS.input,
-    flex: 1,
-    height: 44,
-    fontSize: 13.5,
-    color: '#0F172A',
-  },
-  eyeButton: {
-    padding: 6,
-  },
-  loginButton: {
-    backgroundColor: '#1E51DA',
-    height: 46,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-    shadowColor: '#1E51DA',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  buttonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  loginButtonText: {
-    fontFamily: FONTS.family,
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  demoButton: {
-    marginTop: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.primaryLight,
-    borderRadius: RADIUS.sm,
-  },
-  demoButtonText: {
-    fontFamily: FONTS.family,
-    fontSize: 11.5,
-    color: '#1E51DA',
-    fontWeight: '500',
-  },
-  forgotRow: {
-    alignItems: 'flex-end',
-    marginBottom: 12,
-  },
-  forgotText: {
-    fontFamily: FONTS.family,
-    fontSize: 12.5,
-    color: '#1E51DA',
-    fontWeight: '500',
-  },
-  registerPromptRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 18,
-  },
-  registerPromptText: {
-    fontFamily: FONTS.family,
-    fontSize: 13,
-    color: '#64748B',
-  },
-  registerLinkText: {
-    fontFamily: FONTS.family,
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1E51DA',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 400,
-    maxHeight: '85%',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: 22,
-    ...SHADOWS.lg,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  modalHeaderIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  modalTitle: {
-    fontFamily: FONTS.family,
-    fontSize: 17,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    flex: 1,
-  },
-  modalCloseButton: {
-    padding: 4,
-  },
-  modalSubtitle: {
-    fontFamily: FONTS.family,
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginBottom: 16,
-    lineHeight: 18,
-  },
-  successBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.successLight,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    borderRadius: RADIUS.sm,
     padding: 12,
     marginBottom: 16,
   },
-  successText: {
+  errorText: {
     fontFamily: FONTS.family,
-    color: COLORS.success,
-    fontSize: 12.5,
-    fontWeight: '500',
-    marginLeft: 8,
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '600',
     flex: 1,
-    lineHeight: 17,
+    lineHeight: 16,
   },
+
   workspacePickerContainer: {
-    backgroundColor: COLORS.surfaceSecondary,
-    borderRadius: RADIUS.md,
+    backgroundColor: '#F0F9FF',
     borderWidth: 1,
-    borderColor: COLORS.primaryLight,
+    borderColor: '#BAE6FD',
+    borderRadius: RADIUS.md,
     padding: 12,
     marginBottom: 16,
   },
   workspacePickerTitle: {
     fontFamily: FONTS.family,
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#005C82',
     marginBottom: 8,
   },
   workspaceItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
     padding: 10,
     borderRadius: RADIUS.sm,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    borderColor: '#E2E8F0',
     marginBottom: 6,
   },
   workspaceItemSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryLight,
+    borderColor: '#005C82',
+    backgroundColor: '#E8F3FA',
+  },
+  workspaceItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.xs,
+    backgroundColor: '#E8F3FA',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   workspaceItemName: {
     fontFamily: FONTS.family,
     fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontWeight: '700',
+    color: '#002D42',
   },
   workspaceItemSlug: {
     fontFamily: FONTS.family,
-    fontSize: 11,
-    color: COLORS.primary,
+    fontSize: 10.5,
+    color: '#005C82',
+    marginTop: 1,
   },
-  serverInfoRow: {
+
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    color: '#002D42',
+    marginBottom: 6,
+  },
+  passwordLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  forgotText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#005C82',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  inputWrapperFocused: {
+    borderColor: '#005C82',
+    backgroundColor: '#F8FAFC',
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    fontFamily: FONTS.input,
+    flex: 1,
+    height: 46,
+    fontSize: 13.5,
+    color: '#002D42',
+    fontWeight: '500',
+  },
+  eyeButton: {
+    padding: 4,
+  },
+
+  loginButtonTouchable: {
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    marginTop: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#005C82',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  loginButtonGradient: {
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  buttonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginButtonText: {
+    fontFamily: FONTS.family,
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  disabledButton: {
+    opacity: 0.65,
+  },
+
+  registerPromptRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  registerPromptText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    color: '#64748B',
+  },
+  registerLinkText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#005C82',
+  },
+
+  securityBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
+    marginTop: 18,
+    paddingHorizontal: 8,
   },
-  serverDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#10B981',
-  },
-  serverInfoText: {
+  securityBadgeText: {
     fontFamily: FONTS.family,
     fontSize: 11,
-    color: COLORS.textMuted,
+    fontWeight: '600',
+    color: '#005C82',
+    textAlign: 'center',
+  },
+
+  /* Forgot Modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 45, 66, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.xl,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 92, 130, 0.2)',
+    ...SHADOWS.lg,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalHeaderIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E8F3FA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontFamily: FONTS.heading,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#002D42',
+    marginBottom: 4,
+  },
+  modalSub: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  modalSuccessBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 12,
+  },
+  modalSuccessText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#059669',
+    fontWeight: '600',
+    flex: 1,
+  },
+  modalErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: RADIUS.md,
+    padding: 10,
+    marginBottom: 12,
+  },
+  modalErrorText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#DC2626',
+    fontWeight: '600',
+    flex: 1,
+  },
+  modalSubmitButton: {
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    marginTop: 6,
+  },
+  modalSubmitGradient: {
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSubmitText: {
+    fontFamily: FONTS.family,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  modalCancelButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  modalCancelText: {
+    fontFamily: FONTS.family,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
   },
 });
