@@ -44,9 +44,8 @@ interface PlatformCardData {
   actionText: string;
   actionType: 'internal-ats' | 'external' | 'coming-soon';
   externalUrl?: string;
+  footerType: 'auth' | 'external' | 'coming-soon';
   footerText?: string;
-  footerBoldText?: string;
-  footerColor?: string;
 }
 
 const ALL_CARDS: PlatformCardData[] = [
@@ -60,7 +59,7 @@ const ALL_CARDS: PlatformCardData[] = [
     badgeBorder: '#BFDBFE',
     badgeColor: '#1E51DA',
     iconName: 'people',
-    gradientColors: ['#1E51DA', '#2563EB'],
+    gradientColors: ['#1E51DA', '#1D4ED8'],
     shadowColor: '#1E51DA',
     description:
       'Supercharge your recruitment lifecycle from multi-channel candidate sourcing to AI-assisted resume screening and candidate onboarding.',
@@ -70,11 +69,9 @@ const ALL_CARDS: PlatformCardData[] = [
       'Automated Interview Coordination & Evaluator Feedback',
     ],
     metricsText: 'AI-Powered • 4x Faster Hiring',
-    actionText: 'Launch ATS Workspace',
+    actionText: 'Explore ATS',
     actionType: 'internal-ats',
-    footerText: 'New organization?',
-    footerBoldText: 'Create ATS workspace',
-    footerColor: '#1E51DA',
+    footerType: 'auth',
   },
   // 2. The HR Mindset
   {
@@ -99,8 +96,8 @@ const ALL_CARDS: PlatformCardData[] = [
     actionText: 'Explore HR Mindset',
     actionType: 'external',
     externalUrl: 'https://thehrmindset.org/',
+    footerType: 'external',
     footerText: 'Explore opportunities on thehrmindset.org',
-    footerColor: '#005C82',
   },
   // 3. THRM Digital Marketing
   {
@@ -125,8 +122,8 @@ const ALL_CARDS: PlatformCardData[] = [
     actionText: 'Explore Digital Marketing',
     actionType: 'external',
     externalUrl: 'https://thrmdigitalmarketing.in/',
+    footerType: 'external',
     footerText: 'Explore services on thrmdigitalmarketing.in',
-    footerColor: '#374151',
   },
   // 4. THRM Productions
   {
@@ -151,34 +148,34 @@ const ALL_CARDS: PlatformCardData[] = [
     actionText: 'Explore Productions',
     actionType: 'external',
     externalUrl: 'https://thrmproductions.in/',
+    footerType: 'external',
     footerText: 'Explore productions on thrmproductions.in',
-    footerColor: '#18181B',
   },
   // 5. THRM EduTech
   {
     id: 'edutech',
     title: 'THRM EduTech',
-    subtitle: 'Digital Marketing & Tech Education',
+    subtitle: 'Skills & Learning',
     badge: 'Skills & Learning',
-    badgeBg: '#F5F3FF',
-    badgeBorder: '#DDD6FE',
+    badgeBg: '#FAF5FF',
+    badgeBorder: '#E9D5FF',
     badgeColor: '#7C3AED',
     iconName: 'school-outline',
     gradientColors: ['#7C3AED', '#6D28D9'],
     shadowColor: '#7C3AED',
     description:
-      'Empower learners and teams with hands-on digital marketing, SEO, web development, and performance advertising through real-world agency projects.',
+      'Industry-aligned training programs, career roadmaps, and real-world certification in modern software, cloud engineering, and digital skills.',
     capabilities: [
-      'Practical Project-First Curriculum & Mentorship',
-      'Job-Ready Industry Certifications',
-      'Live Agency Campaign Management',
+      'Hands-on Enterprise Curriculum & Live Labs',
+      'Industry Mentorship & Capstone Projects',
+      'Placement Preparation & Career Mentorship',
     ],
     metricsText: 'Practical Learning • Career Ready',
     actionText: 'Explore EduTech',
     actionType: 'external',
     externalUrl: 'https://thrmedutech.in',
-    footerText: 'Explore programs on thrmedutech.in',
-    footerColor: '#7C3AED',
+    footerType: 'external',
+    footerText: 'Explore courses & programs on thrmedutech.in',
   },
   // 6. THRM HRMS
   {
@@ -187,23 +184,23 @@ const ALL_CARDS: PlatformCardData[] = [
     subtitle: 'Human Resource Management System',
     badge: 'Coming Soon',
     badgeBg: '#F0FDFA',
-    badgeBorder: '#99F6E4',
+    badgeBorder: '#CCFBF1',
     badgeColor: '#0D9488',
     iconName: 'business-outline',
     gradientColors: ['#0D9488', '#0F766E'],
     shadowColor: '#0D9488',
     description:
-      'Unified workforce operations covering employee lifecycle, attendance, payroll records, and statutory compliance.',
+      'Unified employee directory, leave management, automated payroll generation, performance reviews, and compliance tracking.',
     capabilities: [
-      'Complete Employee Lifecycle & Profiles',
-      'Leave Tracking & Shift Rostering',
-      'Enterprise Statutory & Audit Compliance',
+      'Automated Payroll & Attendance Reconciliation',
+      'Leave Accruals, Holidays & Shifts Engine',
+      'Self-Service Employee Portal & Document Vault',
     ],
     metricsText: 'Coming Soon • Workforce Governance',
     actionText: 'Coming Soon',
     actionType: 'coming-soon',
+    footerType: 'coming-soon',
     footerText: 'Coming Soon • Platform in development',
-    footerColor: '#0D9488',
   },
   // 7. THRM CRM
   {
@@ -218,17 +215,17 @@ const ALL_CARDS: PlatformCardData[] = [
     gradientColors: ['#0284C7', '#0369A1'],
     shadowColor: '#0284C7',
     description:
-      'Intelligent client pipelines, deal velocity, lead scoring, and automated revenue growth engine.',
+      'High-velocity deal stages, automated contact enrichment, multi-channel lead tracking, and revenue forecasting.',
     capabilities: [
-      'Visual Deal Pipeline & Forecasting',
-      'Real-Time Revenue Velocity Tracking',
-      'Automated Client Follow-ups & Reminders',
+      'Dynamic Kanban Pipeline & Deal Velocity',
+      'Multi-Channel Inbound Lead Attribution',
+      'Interactive Revenue Forecasting & Dashboards',
     ],
     metricsText: 'Coming Soon • Pipeline Velocity',
     actionText: 'Coming Soon',
     actionType: 'coming-soon',
+    footerType: 'coming-soon',
     footerText: 'Coming Soon • Platform in development',
-    footerColor: '#0284C7',
   },
   // 8. THRM Core Modelling India (CMI)
   {
@@ -252,30 +249,37 @@ const ALL_CARDS: PlatformCardData[] = [
     metricsText: 'Coming Soon • Premier Talent Agency',
     actionText: 'Coming Soon',
     actionType: 'coming-soon',
+    footerType: 'coming-soon',
     footerText: 'Coming Soon • Agency in development',
-    footerColor: '#DC2626',
   },
 ];
 
 export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
+  const cardsSectionY = useRef<number>(450);
   const backboneTriggered = useRef(false);
 
-  // Animations
+  // Entrance animations
+  const heroFadeAnim = useRef(new Animated.Value(0)).current;
   const cardOpacityAnim = useRef(new Animated.Value(0)).current;
-  const cardsTranslateY = useRef(new Animated.Value(30)).current;
+  const cardsTranslateY = useRef(new Animated.Value(25)).current;
   const bottomBarAnim = useRef(new Animated.Value(100)).current;
 
-  // Backbone entrance animation (triggered on scroll)
+  // Backbone entrance animation
   const backboneOpacityAnim = useRef(new Animated.Value(0)).current;
-  const backboneSlideAnim = useRef(new Animated.Value(40)).current;
+  const backboneSlideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
     Animated.parallel([
+      Animated.timing(heroFadeAnim, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: true,
+      }),
       Animated.timing(cardOpacityAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.timing(cardsTranslateY, {
@@ -308,10 +312,10 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    if (offsetY > 150) {
+    if (offsetY > 180) {
       triggerBackboneAnimation();
     }
-    if (offsetY > 250) {
+    if (offsetY > 320) {
       Animated.timing(bottomBarAnim, {
         toValue: 0,
         duration: 250,
@@ -326,6 +330,13 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
     }
   };
 
+  const scrollToCards = () => {
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(cardsSectionY.current - 10, 360),
+      animated: true,
+    });
+  };
+
   const handleCardAction = (card: PlatformCardData) => {
     if (card.actionType === 'internal-ats') {
       navigation.navigate('Login', { product: 'ats' });
@@ -333,45 +344,55 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
       Linking.openURL(card.externalUrl);
     } else if (card.actionType === 'coming-soon') {
       Alert.alert(
-        `${card.title}`,
+        card.title,
         `${card.title} is currently under active enterprise development. Stay tuned for official rollout!`
       );
     }
   };
 
-  const handleFooterLink = (card: PlatformCardData) => {
-    if (card.actionType === 'internal-ats') {
-      navigation.navigate('Register', { product: 'ats' });
-    } else if (card.actionType === 'external' && card.externalUrl) {
-      Linking.openURL(card.externalUrl);
-    }
-  };
-
   return (
     <View style={styles.screenWrapper}>
-      <StatusBar style="dark" />
+      {/* Light status bar for London Blue (#005C82) header */}
+      <StatusBar style="light" />
 
-      {/* Sticky Enterprise Header */}
+      {/* Enterprise Navigation Bar in London Blue (#005C82) matching Web Header */}
       <View
         style={[
           styles.headerContainer,
-          { paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 44 : 12) + 6 },
+          { paddingTop: Math.max(insets.top, Platform.OS === 'ios' ? 44 : 12) + 8 },
         ]}
       >
-        <Image
-          source={require('../../../assets/thrm-universe-logo.png')}
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
-
         <TouchableOpacity
-          onPress={() => navigation.navigate('Login', { product: 'ats' })}
-          style={styles.headerSignInBtn}
-          activeOpacity={0.8}
+          onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+          activeOpacity={0.85}
+          style={styles.logoTouchable}
         >
-          <Text style={styles.headerSignInText}>Sign In</Text>
-          <Ionicons name="arrow-forward" size={13} color={COLORS.primary} />
+          <Image
+            source={require('../../../assets/thrm-universe-logo-v2.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
+
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={scrollToCards}
+            style={styles.headerExploreBtn}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="grid" size={13} color="#005C82" />
+            <Text style={styles.headerExploreBtnText}>Explore</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Login', { product: 'ats' })}
+            style={styles.headerSignInBtn}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.headerSignInText}>Sign In</Text>
+            <Ionicons name="arrow-forward" size={13} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -386,28 +407,71 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
       >
         {/* Subtle Ambient Radial Sky Glow */}
         <LinearGradient
-          colors={['#EEF4FF', '#F8FAFC', '#FFFFFF']}
+          colors={['#E8F3FA', '#F2F8FC', '#FFFFFF']}
           style={styles.heroBackgroundGradient}
           start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 0.55 }}
+          end={{ x: 0.5, y: 1 }}
         />
 
-        {/* Hero Section Header */}
-        <View style={styles.heroIntroContainer}>
+        {/* SECTION 1: Viewport Hero Section with Ecosystem Understanding */}
+        <Animated.View style={[styles.heroIntroContainer, { opacity: heroFadeAnim }]}>
+          {/* Ecosystem Badge */}
           <View style={styles.heroBadge}>
-            <Ionicons name="planet-outline" size={13} color={COLORS.primary} />
+            <Ionicons name="planet" size={13} color="#005C82" />
             <Text style={styles.heroBadgeText}>ONE UNIVERSE • EIGHT PLATFORMS</Text>
           </View>
-          <Text style={styles.heroMainTitle}>
-            Powerhouse Platforms &amp; Digital Ventures
-          </Text>
-          <Text style={styles.heroSubDescription}>
-            Explore deeply interconnected ecosystems powering recruitment, talent marketplaces, performance marketing, and enterprise operations.
-          </Text>
-        </View>
 
-        {/* All 8 Product Cards Container */}
+          {/* Main Hero Title */}
+          <Text style={styles.heroMainTitle}>
+            One Universe.{'\n'}
+            <Text style={styles.heroGradientTitle}>
+              Eight Powerhouse Platforms &amp; Ventures.
+            </Text>
+          </Text>
+
+          {/* Core Understanding Paragraph */}
+          <Text style={styles.heroSubDescription}>
+            The unified THRM operational ecosystem powering AI talent recruitment, intelligent client pipelines, workforce management, digital marketing, media productions, and tech education.
+          </Text>
+
+          {/* Live Metrics Ribbon matching Web View */}
+          <View style={styles.metricsRibbonCard}>
+            <View style={styles.metricColumn}>
+              <Text style={[styles.metricNumber, { color: '#005C82' }]}>4x</Text>
+              <Text style={styles.metricLabel}>Hiring Velocity</Text>
+            </View>
+
+            <View style={styles.metricDivider} />
+
+            <View style={styles.metricColumn}>
+              <Text style={[styles.metricNumber, { color: '#007EA7' }]}>99.99%</Text>
+              <Text style={styles.metricLabel}>Enterprise SLA</Text>
+            </View>
+
+            <View style={styles.metricDivider} />
+
+            <View style={styles.metricColumn}>
+              <Text style={[styles.metricNumber, { color: '#004A69' }]}>8-in-1</Text>
+              <Text style={styles.metricLabel}>Unified Ecosystem</Text>
+            </View>
+          </View>
+
+          {/* Scroll Prompt with Chevron */}
+          <TouchableOpacity
+            onPress={scrollToCards}
+            activeOpacity={0.75}
+            style={styles.scrollPromptButton}
+          >
+            <Text style={styles.scrollPromptText}>SCROLL TO EXPLORE PRODUCTS &amp; VENTURES</Text>
+            <Ionicons name="chevron-down" size={15} color="#005C82" />
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* SECTION 2: All 8 Product Cards Container */}
         <Animated.View
+          onLayout={(e) => {
+            cardsSectionY.current = e.nativeEvent.layout.y;
+          }}
           style={[
             styles.cardsContainer,
             {
@@ -457,18 +521,18 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
                 {/* Capabilities Box */}
                 <View style={styles.capabilitiesContainer}>
-                  <Text style={styles.capabilitiesHeader}>CORE PLATFORM CAPABILITIES</Text>
+                  <Text style={styles.capabilitiesHeader}>CORE CAPABILITIES &amp; SERVICES</Text>
                   {card.capabilities.map((cap, i) => (
                     <View key={i} style={styles.capabilityRow}>
                       <View
                         style={[
                           styles.checkIconBox,
-                          { backgroundColor: card.badgeBg },
+                          { backgroundColor: `${card.badgeColor}18` },
                         ]}
                       >
                         <Ionicons
-                          name="checkmark-sharp"
-                          size={11}
+                          name="checkmark-circle"
+                          size={13}
                           color={card.badgeColor}
                         />
                       </View>
@@ -481,20 +545,30 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
                 <View
                   style={[
                     styles.metricsChip,
-                    { backgroundColor: card.badgeBg, borderColor: card.badgeBorder },
+                    { backgroundColor: `${card.badgeColor}0F`, borderColor: `${card.badgeColor}25` },
                   ]}
                 >
                   <Ionicons name="flash" size={13} color={card.badgeColor} />
-                  <Text style={[styles.metricsChipText, { color: card.badgeColor }]}>
+                  <Text style={[styles.metricsChipText, { color: '#1E293B' }]}>
                     {card.metricsText}
                   </Text>
                 </View>
 
                 {/* Action / Launch Button */}
                 {isComingSoon ? (
-                  <View style={styles.comingSoonBox}>
-                    <Ionicons name="time-outline" size={15} color="#94A3B8" />
-                    <Text style={styles.comingSoonText}>Platform in Development</Text>
+                  <View
+                    style={[
+                      styles.comingSoonBox,
+                      {
+                        backgroundColor: `${card.badgeColor}12`,
+                        borderColor: `${card.badgeColor}35`,
+                      },
+                    ]}
+                  >
+                    <Ionicons name="time-outline" size={15} color={card.badgeColor} />
+                    <Text style={[styles.comingSoonText, { color: card.badgeColor }]}>
+                      {card.actionText}
+                    </Text>
                   </View>
                 ) : (
                   <TouchableOpacity
@@ -521,30 +595,47 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
                   </TouchableOpacity>
                 )}
 
-                {/* Secondary Footer / Org Link */}
-                {card.footerText && (
+                {/* Card Footer Actions matching Web */}
+                <View style={styles.cardFooterDivider} />
+                {card.footerType === 'auth' ? (
+                  <View style={styles.cardAuthFooterRow}>
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Login', { product: 'ats' })}
+                      activeOpacity={0.7}
+                      style={styles.cardAuthSignInLink}
+                    >
+                      <Ionicons name="lock-closed" size={13} color="#005C82" />
+                      <Text style={styles.cardAuthSignInText}>Sign In to ATS</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Register', { product: 'ats' })}
+                      activeOpacity={0.7}
+                      style={styles.cardAuthSignUpLink}
+                    >
+                      <Text style={styles.cardAuthSignUpText}>Sign Up</Text>
+                      <Ionicons name="chevron-forward" size={12} color="#64748B" />
+                    </TouchableOpacity>
+                  </View>
+                ) : card.footerType === 'external' ? (
                   <TouchableOpacity
-                    onPress={() => handleFooterLink(card)}
+                    onPress={() => card.externalUrl && Linking.openURL(card.externalUrl)}
                     activeOpacity={0.7}
-                    style={styles.createOrgLink}
-                    disabled={isComingSoon}
+                    style={styles.cardExternalFooterLink}
                   >
-                    <Text style={styles.createOrgText}>
-                      {card.footerText}{' '}
-                      {card.footerBoldText && (
-                        <Text style={[styles.createOrgBold, { color: card.footerColor }]}>
-                          {card.footerBoldText}
-                        </Text>
-                      )}
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.cardExternalFooterText, { color: card.badgeColor }]}
+                    >
+                      {card.footerText}
                     </Text>
-                    {!isComingSoon && (
-                      <Ionicons
-                        name="chevron-forward"
-                        size={13}
-                        color={card.footerColor || COLORS.primary}
-                      />
-                    )}
+                    <Ionicons name="chevron-forward" size={13} color={card.badgeColor} />
                   </TouchableOpacity>
+                ) : (
+                  <View style={styles.cardComingSoonFooterRow}>
+                    <View style={[styles.pulseDot, { backgroundColor: card.badgeColor }]} />
+                    <Text style={styles.cardComingSoonFooterText}>{card.footerText}</Text>
+                  </View>
                 )}
               </View>
             );
@@ -564,14 +655,14 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
           <View style={styles.backboneHeader}>
             <Text style={styles.backboneTitle}>Built on a Shared Enterprise Backbone</Text>
             <Text style={styles.backboneSubtitle}>
-              Every application in the THRM Universe is deeply interconnected, ensuring zero data silos across operations.
+              Every application in the THRM Universe is deeply interconnected, ensuring zero data silos and smooth transitions across hiring, sales, and employee operations.
             </Text>
           </View>
 
           <View style={styles.pillarsGrid}>
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="lock-closed" size={20} color={COLORS.primary} />
+                <Ionicons name="lock-closed" size={18} color="#005C82" />
               </View>
               <Text style={styles.pillarTitle}>Universal Identity</Text>
               <Text style={styles.pillarDesc}>
@@ -581,17 +672,17 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="hardware-chip" size={20} color={COLORS.primary} />
+                <Ionicons name="hardware-chip" size={18} color="#005C82" />
               </View>
               <Text style={styles.pillarTitle}>AI Engine Integration</Text>
               <Text style={styles.pillarDesc}>
-                Automated document parsing, smart candidate scoring, and predictive pipeline analytics.
+                Automated document parsing, smart candidate scoring, and predictive sales pipeline analytics.
               </Text>
             </View>
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="shield-checkmark" size={20} color={COLORS.primary} />
+                <Ionicons name="shield-checkmark" size={18} color="#005C82" />
               </View>
               <Text style={styles.pillarTitle}>Isolated Security</Text>
               <Text style={styles.pillarDesc}>
@@ -601,39 +692,91 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 
             <View style={styles.pillarTile}>
               <View style={styles.pillarIconCircle}>
-                <Ionicons name="phone-portrait" size={20} color={COLORS.primary} />
+                <Ionicons name="phone-portrait" size={18} color="#005C82" />
               </View>
               <Text style={styles.pillarTitle}>Mobile Companion</Text>
               <Text style={styles.pillarDesc}>
-                Native mobile experience providing candidate screening, interview reviews, and instant updates.
+                Native Android mobile app providing real-time push alerts, interview reviews, and approval actions.
               </Text>
             </View>
           </View>
         </Animated.View>
 
-        {/* SECTION 4: Production-Grade Mobile Footer */}
-        <View style={styles.footerSection}>
+        {/* SECTION 4: Production-Grade Enterprise Footer (London Blue matching Web) */}
+        <View style={styles.footerContainer}>
           <Image
-            source={require('../../../assets/thrm-universe-logo.png')}
+            source={require('../../../assets/thrm-universe-logo-v2.png')}
             style={styles.footerLogo}
             resizeMode="contain"
           />
+
           <Text style={styles.footerDescription}>
-            THRM Universe is in alliance with THRM Business Solutions OPC Private Limited.
+            Unified enterprise operating ecosystem connecting talent recruitment intelligence, deal pipelines, and workforce operations with zero data silos.
           </Text>
+
+          {/* Alliance Badge matching Web */}
+          <View style={styles.footerAllianceBadge}>
+            <View style={styles.allianceDot} />
+            <Text style={styles.footerAllianceText}>
+              THRM Universe is in alliance with THRM Business Solutions OPC Private Limited
+            </Text>
+          </View>
+
+          {/* Platforms Directory */}
+          <View style={styles.footerDirectoryBox}>
+            <Text style={styles.footerDirectoryHeading}>PLATFORMS &amp; VENTURES</Text>
+            <View style={styles.footerLinksGrid}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Login', { product: 'ats' })}
+                style={styles.footerLinkRow}
+              >
+                <Ionicons name="chevron-forward" size={12} color="#BAE6FD" />
+                <Text style={styles.footerLinkText}>THRM ATS (Recruitment)</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL('https://thehrmindset.org/')}
+                style={styles.footerLinkRow}
+              >
+                <Ionicons name="chevron-forward" size={12} color="#BAE6FD" />
+                <Text style={styles.footerLinkText}>The HR Mindset</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL('https://thrmdigitalmarketing.in/')}
+                style={styles.footerLinkRow}
+              >
+                <Ionicons name="chevron-forward" size={12} color="#BAE6FD" />
+                <Text style={styles.footerLinkText}>THRM Digital Marketing</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL('https://thrmproductions.in/')}
+                style={styles.footerLinkRow}
+              >
+                <Ionicons name="chevron-forward" size={12} color="#BAE6FD" />
+                <Text style={styles.footerLinkText}>THRM Productions</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Linking.openURL('https://thrmedutech.in')}
+                style={styles.footerLinkRow}
+              >
+                <Ionicons name="chevron-forward" size={12} color="#BAE6FD" />
+                <Text style={styles.footerLinkText}>THRM EduTech</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <View style={styles.footerDivider} />
+
           <Text style={styles.footerCopyright}>
             © {new Date().getFullYear()} THRM Universe. All rights reserved.
           </Text>
-          <View style={styles.footerBadgesRow}>
-            <Text style={styles.footerBadgeText}>Enterprise Multi-Tenant</Text>
-            <Text style={styles.footerBadgeDot}>•</Text>
-            <Text style={styles.footerBadgeText}>Encrypted Architecture</Text>
-          </View>
         </View>
       </ScrollView>
 
-      {/* Floating Bottom Quick Action Bar */}
+      {/* Floating Bottom Quick Action Bar when scrolled down */}
       <Animated.View
         style={[
           styles.floatingBottomBar,
@@ -646,7 +789,7 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
         <View style={styles.floatingBarInner}>
           <View style={styles.floatingBarInfo}>
             <Text style={styles.floatingBarTitle}>THRM Universe</Text>
-            <Text style={styles.floatingBarSub}>Access your enterprise workspace</Text>
+            <Text style={styles.floatingBarSub}>Launch your enterprise workspace</Text>
           </View>
 
           <TouchableOpacity
@@ -673,43 +816,81 @@ export const LandingUniverseScreen: React.FC<LandingUniverseScreenProps> = ({ na
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F9FD',
   },
+
+  /* Enterprise London Blue Navigation Header matching Web */
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#005C82',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    zIndex: 10,
-    ...SHADOWS.sm,
+    borderBottomColor: '#004766',
+    zIndex: 20,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#002D42',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  logoTouchable: {
+    justifyContent: 'center',
   },
   headerLogo: {
-    width: 260,
-    height: 80,
+    width: 175,
+    height: 48,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerExploreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: RADIUS.md,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...SHADOWS.sm,
+  },
+  headerExploreBtnText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#005C82',
   },
   headerSignInBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: RADIUS.full,
-    backgroundColor: '#EFF6FF',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   headerSignInText: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
+    fontSize: 11.5,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: '#FFFFFF',
   },
+
   scrollContent: {
-    paddingHorizontal: 16,
     position: 'relative',
   },
   heroBackgroundGradient: {
@@ -717,11 +898,14 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 420,
+    height: 480,
   },
+
+  /* Hero Section */
   heroIntroContainer: {
-    paddingTop: 18,
-    paddingBottom: 6,
+    paddingTop: 24,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
     alignItems: 'center',
     textAlign: 'center',
   },
@@ -730,78 +914,161 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     borderRadius: RADIUS.full,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
-    marginBottom: 8,
+    borderColor: 'rgba(0, 92, 130, 0.25)',
+    marginBottom: 12,
+    ...SHADOWS.sm,
   },
   heroBadgeText: {
     fontFamily: FONTS.family,
     fontSize: 10,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: '#005C82',
     letterSpacing: 0.5,
   },
   heroMainTitle: {
     fontFamily: FONTS.heading,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#002D42',
     textAlign: 'center',
-    letterSpacing: -0.3,
-    marginBottom: 6,
-    paddingHorizontal: 8,
+    lineHeight: 31,
+    letterSpacing: -0.4,
+    marginBottom: 10,
+  },
+  heroGradientTitle: {
+    color: '#005C82',
+    fontWeight: '900',
   },
   heroSubDescription: {
     fontFamily: FONTS.family,
     fontSize: 12.5,
-    color: '#64748B',
+    color: '#475569',
     textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 16,
-    marginBottom: 10,
+    lineHeight: 19,
+    paddingHorizontal: 8,
+    marginBottom: 18,
   },
+
+  /* 3-Column Live Metrics Ribbon matching Web */
+  metricsRibbonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.xl,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 92, 130, 0.18)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#005C82',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+    marginBottom: 16,
+  },
+  metricColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  metricNumber: {
+    fontFamily: FONTS.heading,
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  metricLabel: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#334155',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  metricDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: 'rgba(0, 92, 130, 0.15)',
+  },
+
+  scrollPromptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginTop: 4,
+  },
+  scrollPromptText: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#005C82',
+    letterSpacing: 0.6,
+  },
+
+  /* Product Cards Section */
   cardsContainer: {
-    gap: 18,
-    paddingTop: 8,
+    paddingHorizontal: 16,
+    gap: 16,
+    paddingTop: 6,
   },
   productCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
-    padding: 20,
+    padding: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.md,
+    borderColor: 'rgba(0, 92, 130, 0.16)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#005C82',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   cardIconBox: {
-    width: 46,
-    height: 46,
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 5,
+    elevation: 3,
   },
   categoryBadgePill: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    paddingVertical: 3.5,
+    paddingHorizontal: 9,
     borderRadius: RADIUS.full,
     borderWidth: 1,
   },
   categoryBadgeText: {
     fontFamily: FONTS.family,
-    fontSize: 10.5,
-    fontWeight: '700',
+    fontSize: 10,
+    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
@@ -810,28 +1077,29 @@ const styles = StyleSheet.create({
   },
   productTitle: {
     fontFamily: FONTS.heading,
-    fontSize: 21,
+    fontSize: 19,
     fontWeight: '900',
-    color: '#0F172A',
-    letterSpacing: -0.3,
+    color: '#002D42',
+    letterSpacing: -0.2,
   },
   productSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     marginTop: 2,
   },
   productDescription: {
     fontFamily: FONTS.family,
-    fontSize: 12.5,
+    fontSize: 12,
     color: '#475569',
-    lineHeight: 18.5,
+    lineHeight: 18,
     marginBottom: 12,
   },
+
   capabilitiesContainer: {
     backgroundColor: '#F8FAFC',
     borderRadius: RADIUS.md,
-    padding: 12,
+    padding: 11,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     marginBottom: 12,
@@ -841,128 +1109,181 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 9.5,
     fontWeight: '800',
-    letterSpacing: 0.6,
-    color: '#94A3B8',
+    letterSpacing: 0.5,
+    color: '#005C82',
     marginBottom: 2,
   },
   capabilityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 7,
   },
   checkIconBox: {
-    width: 17,
-    height: 17,
-    borderRadius: 8.5,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   capabilityText: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#334155',
     flex: 1,
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 15.5,
   },
+
   metricsChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 6,
-    paddingHorizontal: 11,
+    paddingHorizontal: 10,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   metricsChipText: {
     fontFamily: FONTS.family,
     fontSize: 11,
     fontWeight: '700',
   },
+
   comingSoonBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    height: 46,
+    height: 44,
     borderRadius: RADIUS.md,
-    backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   comingSoonText: {
     fontFamily: FONTS.family,
     fontSize: 12.5,
-    fontWeight: '700',
-    color: '#64748B',
+    fontWeight: '800',
   },
+
   launchButtonTouchable: {
     borderRadius: RADIUS.md,
     overflow: 'hidden',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   launchButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    height: 46,
-    paddingHorizontal: 18,
+    height: 44,
+    paddingHorizontal: 16,
   },
   launchButtonText: {
     fontFamily: FONTS.family,
-    fontSize: 13.5,
+    fontSize: 13,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },
-  createOrgLink: {
+
+  cardFooterDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0, 92, 130, 0.1)',
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  cardAuthFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  cardAuthSignInLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  cardAuthSignInText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#005C82',
+  },
+  cardAuthSignUpLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  cardAuthSignUpText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  cardExternalFooterLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    paddingVertical: 2,
+  },
+  cardExternalFooterText: {
+    fontFamily: FONTS.family,
+    fontSize: 11,
+    fontWeight: '600',
+    flex: 1,
+    marginRight: 6,
+  },
+  cardComingSoonFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    marginTop: 10,
-    paddingVertical: 4,
+    gap: 6,
+    paddingVertical: 2,
   },
-  createOrgText: {
+  cardComingSoonFooterText: {
     fontFamily: FONTS.family,
-    fontSize: 11.5,
+    fontSize: 11,
+    fontWeight: '600',
     color: '#64748B',
   },
-  createOrgBold: {
-    fontWeight: '700',
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
+
+  /* Enterprise Backbone Section */
   backboneCard: {
-    marginTop: 36,
-    backgroundColor: '#FFFFFF',
+    marginTop: 28,
+    marginHorizontal: 16,
+    backgroundColor: '#EAF3FA',
     borderRadius: RADIUS.xl,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    ...SHADOWS.sm,
+    borderColor: 'rgba(0, 92, 130, 0.2)',
   },
   backboneHeader: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   backboneTitle: {
     fontFamily: FONTS.heading,
     fontSize: 17,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#002D42',
     textAlign: 'center',
     marginBottom: 6,
   },
   backboneSubtitle: {
     fontFamily: FONTS.family,
-    fontSize: 12,
-    color: '#64748B',
+    fontSize: 11.5,
+    color: '#475569',
     textAlign: 'center',
-    lineHeight: 17,
+    lineHeight: 16.5,
   },
   pillarsGrid: {
     flexDirection: 'row',
@@ -971,90 +1292,140 @@ const styles = StyleSheet.create({
     rowGap: 10,
   },
   pillarTile: {
-    width: (width - 74) / 2,
-    backgroundColor: '#F8FAFC',
+    width: (width - 76) / 2,
+    backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.lg,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(0, 92, 130, 0.15)',
+    ...SHADOWS.sm,
   },
   pillarIconCircle: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: RADIUS.sm,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#E8F4FA',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 92, 130, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
   pillarTitle: {
     fontFamily: FONTS.family,
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#002D42',
     marginBottom: 4,
   },
   pillarDesc: {
     fontFamily: FONTS.family,
-    fontSize: 11,
-    color: '#64748B',
-    lineHeight: 15.5,
+    fontSize: 10.5,
+    color: '#475569',
+    lineHeight: 14.5,
   },
-  footerSection: {
-    alignItems: 'center',
-    marginTop: 36,
-    paddingTop: 24,
+
+  /* Enterprise Footer Section in London Blue (#005C82) matching Web */
+  footerContainer: {
+    marginTop: 32,
+    backgroundColor: '#005C82',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    gap: 8,
+    borderTopColor: '#004766',
+    paddingTop: 28,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
   },
   footerLogo: {
-    width: 260,
-    height: 80,
+    width: 220,
+    height: 64,
+    marginBottom: 10,
   },
   footerDescription: {
     fontFamily: FONTS.family,
     fontSize: 11.5,
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.88)',
     textAlign: 'center',
-    maxWidth: 320,
-    lineHeight: 16,
-    marginTop: 2,
+    lineHeight: 16.5,
+    marginBottom: 14,
+  },
+  footerAllianceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    marginBottom: 18,
+  },
+  allianceDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#38BDF8',
+  },
+  footerAllianceText: {
+    fontFamily: FONTS.family,
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#E0F2FE',
+    textAlign: 'center',
+    flex: 1,
+  },
+  footerDirectoryBox: {
+    width: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
+    borderRadius: RADIUS.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginBottom: 16,
+  },
+  footerDirectoryHeading: {
+    fontFamily: FONTS.family,
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#BAE6FD',
+    letterSpacing: 0.6,
+    marginBottom: 10,
+  },
+  footerLinksGrid: {
+    gap: 8,
+  },
+  footerLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  footerLinkText: {
+    fontFamily: FONTS.family,
+    fontSize: 11.5,
+    color: '#F0F9FF',
+    fontWeight: '500',
   },
   footerDivider: {
-    width: '60%',
+    width: '100%',
     height: 1,
-    backgroundColor: '#E2E8F0',
-    marginVertical: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    marginVertical: 12,
   },
   footerCopyright: {
     fontFamily: FONTS.family,
-    fontSize: 11,
-    color: '#94A3B8',
+    fontSize: 10.5,
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
   },
-  footerBadgesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 2,
-  },
-  footerBadgeText: {
-    fontFamily: FONTS.family,
-    fontSize: 10.5,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  footerBadgeDot: {
-    fontSize: 10,
-    color: '#94A3B8',
-  },
+
+  /* Floating Bottom Quick Action Bar */
   floatingBottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    backgroundColor: 'rgba(255, 255, 255, 0.97)',
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
     paddingTop: 10,
@@ -1073,7 +1444,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.family,
     fontSize: 13,
     fontWeight: '800',
-    color: '#0F172A',
+    color: '#002D42',
   },
   floatingBarSub: {
     fontFamily: FONTS.family,
@@ -1094,12 +1465,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
   },
   floatingLaunchText: {
     fontFamily: FONTS.family,
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#FFFFFF',
   },
